@@ -7,16 +7,34 @@ A powerful Go foundation library for building EggyByte microservices with minima
 - **Single-Line Bootstrap**: Start your entire service with one function call
 - **Automatic Repository Registration**: Tables self-register and auto-migrate via init()
 - **Service Lifecycle Management**: Graceful startup and shutdown with signal handling
-- **Built-in Observability**: Prometheus metrics and health checks out of the box
+- **Built-in Observability**: Prometheus metrics and health checks on unified monitoring endpoint
+- **Unified Monitoring**: Single port (9090) serves /metrics, /healthz, /livez, /readyz endpoints
 - **Structured Logging**: Context-aware logging with request ID tracking
 - **TiDB/MySQL Support**: Production-ready database integration with connection pooling
-- **Kubernetes-Ready**: Health probes and configuration watching
+- **Kubernetes-Ready**: Health probes following Kubernetes best practices
 - **Zero Boilerplate**: Focus on business logic, not infrastructure code
+- **CLI Code Generation**: ebcctl tool generates production-ready backend, frontend, or complete projects
 
 ## 📦 Installation
 
+### As a Library
+
 ```bash
 go get github.com/eggybyte-technology/go-eggybyte-core
+```
+
+### CLI Tool (ebcctl)
+
+Install the `ebcctl` command-line tool for project scaffolding:
+
+```bash
+go install github.com/eggybyte-technology/go-eggybyte-core/cmd/ebcctl@latest
+```
+
+Verify installation:
+
+```bash
+ebcctl version
 ```
 
 ## 🚀 Quick Start
@@ -45,12 +63,13 @@ func main() {
 ```
 
 That's it! Your service now has:
-- ✅ Structured logging
-- ✅ Prometheus metrics on port 9090
-- ✅ Health checks (/healthz, /livez, /readyz)
+- ✅ Structured logging with request ID tracking
+- ✅ Unified monitoring server on port 9090
+- ✅ Prometheus metrics endpoint (/metrics)
+- ✅ Kubernetes health probes (/healthz, /livez, /readyz)
 - ✅ Graceful shutdown on SIGTERM/SIGINT
-- ✅ Database connection (if DSN provided)
-- ✅ Automatic table migration
+- ✅ Database connection with pooling (if DSN provided)
+- ✅ Automatic table migration via repository registry
 
 ### With Business Services
 
@@ -155,15 +174,32 @@ K8S_NAMESPACE=default
 K8S_CONFIGMAP_NAME=my-service-config
 ```
 
-## 📊 Built-in Endpoints
+## 📊 Built-in Monitoring Endpoints
 
-### Metrics (Port 9090)
-- `GET /metrics` - Prometheus metrics
+All monitoring endpoints are served on a single port (default 9090) for simplicity and Kubernetes compatibility:
 
-### Health Checks (Port 9090)
-- `GET /healthz` - Combined health check
-- `GET /livez` - Liveness probe (always returns 200)
-- `GET /readyz` - Readiness probe (checks dependencies)
+### Unified Monitoring Server (Port 9090)
+- `GET /metrics` - Prometheus metrics exposition
+- `GET /healthz` - Combined health check (JSON response)
+- `GET /livez` - Liveness probe (returns 200 when service is running)
+- `GET /readyz` - Readiness probe (checks all registered health checkers)
+
+### Example Health Check Response
+```json
+{
+  "status": true,
+  "checks": {
+    "database": "OK",
+    "redis": "OK"
+  }
+}
+```
+
+### Prometheus Metrics
+The `/metrics` endpoint exposes:
+- Go runtime metrics (goroutines, memory, GC)
+- Custom application metrics (when registered)
+- HTTP request metrics (when using core HTTP handlers)
 
 ## 🏗️ Architecture
 
@@ -171,14 +207,30 @@ K8S_CONFIGMAP_NAME=my-service-config
 
 ```
 go-eggybyte-core/
-├── config/     # Configuration management
-├── log/        # Structured logging with context
-├── db/         # Database with auto-registration
-├── service/    # Service lifecycle management
-├── metrics/    # Prometheus metrics
-├── health/     # Health check endpoints
-└── core/       # Bootstrap orchestrator
+├── config/      # Configuration management (env vars, K8s ConfigMap)
+├── log/         # Structured logging with context and request ID
+├── db/          # Database with repository auto-registration
+├── service/     # Service lifecycle orchestration
+├── monitoring/  # Unified metrics and health endpoints
+├── metrics/     # Legacy metrics service (deprecated, use monitoring/)
+├── health/      # Legacy health service (deprecated, use monitoring/)
+├── core/        # Bootstrap orchestrator (single entry point)
+└── cmd/ebcctl/  # CLI tool for code generation
 ```
+
+### Key Components
+
+**Bootstrap Flow**:
+1. Load configuration from environment variables
+2. Initialize structured logging
+3. Set global configuration
+4. Create service launcher
+5. Register database initializer (if DSN provided)
+6. Register monitoring service (metrics + health)
+7. Register business services
+8. Start all services concurrently
+9. Wait for shutdown signal
+10. Graceful shutdown with timeout
 
 ### Design Patterns
 
@@ -292,6 +344,144 @@ func TestUserRepository(t *testing.T) {
 }
 ```
 
+## 🛠️ CLI Tool (ebcctl)
+
+The `ebcctl` tool accelerates development by generating production-ready code scaffolds.
+
+### Initialize a New Backend Microservice
+
+Create a complete Go microservice structure:
+
+```bash
+ebcctl init backend user-service
+```
+
+This generates:
+- Complete project structure (`cmd/`, `internal/`)
+- `go.mod` with core dependencies (local replace for development)
+- `main.go` with Bootstrap integration
+- `README.md` with service documentation
+- `ENV.md` with configuration guide
+- `Dockerfile` for containerization
+- `.gitignore` with Go best practices
+
+**Custom module path:**
+
+```bash
+ebcctl init backend user-service --module github.com/mycompany/user-service
+```
+
+**Specify Go version:**
+
+```bash
+ebcctl init backend user-service --go-version 1.25.1
+```
+
+### Initialize a New Flutter Frontend Project
+
+Create a complete Flutter project structure:
+
+```bash
+ebcctl init frontend eggybyte-app
+```
+
+This generates:
+- Complete Flutter project structure
+- `pubspec.yaml` with dependencies
+- Standard Material Design setup
+- HTTP client configuration
+- State management setup
+- Environment configuration
+- `README.md` with documentation
+
+**Custom organization:**
+
+```bash
+ebcctl init frontend eggybyte-app --org com.mycompany
+```
+
+### Initialize a Complete Full-Stack Project
+
+Create a complete project with both backend and frontend:
+
+```bash
+ebcctl init project eggybyte-platform
+```
+
+This generates:
+- `backend/` - Directory containing backend microservices
+  - `services/auth/` - Authentication service
+  - `services/user/` - User management service
+  - Example repository implementations
+- `frontend/` - Flutter application
+- `api/` - Shared API definitions (protobuf)
+- `Makefile` - Unified build management
+- `docker-compose.yml` - Local development setup
+- `README.md` - Complete project documentation
+
+### Generate Repository Code
+
+Create a repository with automatic table registration:
+
+```bash
+cd my-service
+ebcctl new repo user
+```
+
+This generates `internal/repositories/user_repository.go` with:
+- Model struct definition
+- Repository interface and implementation
+- CRUD operations (Create, FindByID, Update, Delete)
+- Automatic `init()` registration
+- Complete English documentation
+
+**Example generated repository:**
+
+```go
+package repositories
+
+import (
+    "context"
+    "gorm.io/gorm"
+    "github.com/eggybyte-technology/go-eggybyte-core/db"
+)
+
+type User struct {
+    ID uint `gorm:"primaryKey"`
+    // TODO: Add your model fields
+}
+
+type UserRepository struct {
+    db *gorm.DB
+}
+
+func (r *UserRepository) TableName() string {
+    return "users"
+}
+
+func (r *UserRepository) InitTable(ctx context.Context, database *gorm.DB) error {
+    r.db = database
+    return r.db.WithContext(ctx).AutoMigrate(&User{})
+}
+
+// CRUD methods...
+
+func init() {
+    db.RegisterRepository(&UserRepository{})
+}
+```
+
+### ebcctl Command Reference
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `ebcctl init backend <name>` | Create new backend microservice | `ebcctl init backend payment-service` |
+| `ebcctl init frontend <name>` | Create new Flutter frontend project | `ebcctl init frontend mobile-app` |
+| `ebcctl init project <name>` | Create complete full-stack project | `ebcctl init project eggybyte-platform` |
+| `ebcctl new repo <model>` | Generate repository code | `ebcctl new repo order` |
+| `ebcctl version` | Show version information | `ebcctl version` |
+| `ebcctl help` | Show help message | `ebcctl help` |
+
 ## 🔍 Best Practices
 
 1. **Always use context**: Pass context through all layers
@@ -300,6 +490,7 @@ func TestUserRepository(t *testing.T) {
 4. **Keep methods under 50 lines**: Follow code quality standards
 5. **Document public APIs**: Write comprehensive English comments
 6. **Use Bootstrap**: Let the core handle infrastructure setup
+7. **Use ebcctl**: Generate code scaffolds for consistency
 
 ## 🛠️ Advanced Usage
 

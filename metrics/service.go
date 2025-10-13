@@ -4,12 +4,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/eggybyte-technology/go-eggybyte-core/log"
+)
+
+var (
+	// metricsOnce ensures metrics collectors are registered only once
+	metricsOnce sync.Once
 )
 
 // MetricsService implements service.Service interface to expose Prometheus metrics.
@@ -66,8 +72,15 @@ func NewMetricsService(port int) *MetricsService {
 //   - Blocks until context is cancelled
 //   - Performs graceful shutdown on cancellation
 func (m *MetricsService) Start(ctx context.Context) error {
-	// Register default Go runtime metrics
-	prometheus.MustRegister(prometheus.NewGoCollector())
+	// Register default Go runtime metrics (only once globally)
+	metricsOnce.Do(func() {
+		// Attempt to register Go collector
+		// If already registered (e.g., from previous service restart), ignore the error
+		if err := prometheus.Register(prometheus.NewGoCollector()); err != nil {
+			m.logger.Debug("Go collector already registered, skipping",
+				log.Field{Key: "error", Value: err.Error()})
+		}
+	})
 
 	// Setup HTTP mux with metrics endpoint
 	mux := http.NewServeMux()

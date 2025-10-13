@@ -6,9 +6,8 @@ import (
 
 	"github.com/eggybyte-technology/go-eggybyte-core/config"
 	"github.com/eggybyte-technology/go-eggybyte-core/db"
-	"github.com/eggybyte-technology/go-eggybyte-core/health"
 	"github.com/eggybyte-technology/go-eggybyte-core/log"
-	"github.com/eggybyte-technology/go-eggybyte-core/metrics"
+	"github.com/eggybyte-technology/go-eggybyte-core/monitoring"
 	"github.com/eggybyte-technology/go-eggybyte-core/service"
 )
 
@@ -83,7 +82,7 @@ func Bootstrap(cfg *config.Config, businessServices ...service.Service) error {
 
 	// Phase 7: Run launcher with complete lifecycle management
 	log.Info("Launching services",
-		log.Field{Key: "service_count", Value: len(businessServices) + 2}) // +2 for metrics and health
+		log.Field{Key: "service_count", Value: len(businessServices) + 1}) // +1 for monitoring
 
 	if err := launcher.Run(context.Background()); err != nil {
 		return fmt.Errorf("service launcher failed: %w", err)
@@ -128,15 +127,12 @@ func registerInitializers(launcher *service.Launcher, cfg *config.Config) error 
 }
 
 // registerInfraServices registers core infrastructure services
-// (metrics and health) with the launcher.
+// (unified monitoring service with metrics and health endpoints) with the launcher.
 func registerInfraServices(launcher *service.Launcher, cfg *config.Config) {
-	// Metrics service
-	metricsService := metrics.NewMetricsService(cfg.MetricsPort)
-	launcher.AddService(metricsService)
-	log.Info("Metrics service registered", log.Field{Key: "port", Value: cfg.MetricsPort})
-
-	// Health service
-	healthService := health.NewHealthService(cfg.MetricsPort)
-	launcher.AddService(healthService)
-	log.Info("Health service registered", log.Field{Key: "port", Value: cfg.MetricsPort})
+	// Unified monitoring service (metrics + health on same port)
+	monitoringService := monitoring.NewMonitoringService(cfg.MetricsPort)
+	launcher.AddService(monitoringService)
+	log.Info("Monitoring service registered",
+		log.Field{Key: "port", Value: cfg.MetricsPort},
+		log.Field{Key: "endpoints", Value: "/metrics, /healthz, /livez, /readyz"})
 }

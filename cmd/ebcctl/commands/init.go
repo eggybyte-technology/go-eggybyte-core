@@ -11,25 +11,38 @@ import (
 )
 
 var (
-	// initCmd initializes a new microservice project
+	// initCmd is the parent command for initialization
 	initCmd = &cobra.Command{
-		Use:   "init <service-name>",
-		Short: "Initialize a new microservice project",
-		Long: `Initialize a new microservice project with complete structure.
+		Use:   "init",
+		Short: "Initialize a new project, service, or frontend",
+		Long: `Initialize various types of projects:
+  - backend: Create a Go microservice
+  - frontend: Create a Flutter application
+  - project: Create a complete full-stack project
+
+Use 'ebcctl init <type> <name>' to create a new project.`,
+	}
+
+	// initBackendCmd initializes a new backend microservice
+	initBackendCmd = &cobra.Command{
+		Use:   "backend <service-name>",
+		Short: "Initialize a new backend microservice",
+		Long: `Initialize a new Go microservice with complete structure.
 
 Creates a new directory with the service name containing:
   - Standard project structure (cmd/, internal/, etc.)
-  - go.mod with core dependencies
+  - go.mod with core dependencies (local replace for development)
   - main.go with Bootstrap integration
   - README.md with documentation
+  - ENV.md with configuration guide
   - Dockerfile for containerization
-  - Kubernetes deployment manifests
+  - .gitignore with Go best practices
 
 Example:
-  ebcctl init user-service
-  ebcctl init payment-service`,
+  ebcctl init backend user-service
+  ebcctl init backend payment-service --module github.com/myorg/payment`,
 		Args: cobra.ExactArgs(1),
-		RunE: runInit,
+		RunE: runInitBackend,
 	}
 
 	// modulePath is the Go module path for the new service
@@ -39,16 +52,20 @@ Example:
 	goVersion string
 )
 
-// init registers flags for the init command
+// init registers flags for the init commands
 func init() {
-	initCmd.Flags().StringVarP(&modulePath, "module", "m", "",
+	// Backend command flags
+	initBackendCmd.Flags().StringVarP(&modulePath, "module", "m", "",
 		"Go module path (default: github.com/eggybyte-technology/<service-name>)")
-	initCmd.Flags().StringVar(&goVersion, "go-version", "1.24.5",
+	initBackendCmd.Flags().StringVar(&goVersion, "go-version", "1.25.1",
 		"Go version to use in go.mod")
+
+	// Add subcommands to init
+	initCmd.AddCommand(initBackendCmd)
 }
 
-// runInit executes the init command to create a new service project.
-func runInit(cmd *cobra.Command, args []string) error {
+// runInitBackend executes the init backend command to create a new service project.
+func runInitBackend(cmd *cobra.Command, args []string) error {
 	serviceName := args[0]
 
 	// Validate service name
@@ -195,6 +212,10 @@ go %s
 require (
 	github.com/eggybyte-technology/go-eggybyte-core v0.1.0
 )
+
+// Local development - adjust path to point to go-eggybyte-core
+// Example: if go-eggybyte-core is in parent directory, use ../go-eggybyte-core
+replace github.com/eggybyte-technology/go-eggybyte-core => ../go-eggybyte-core
 `, modulePath, goVersion)
 }
 
