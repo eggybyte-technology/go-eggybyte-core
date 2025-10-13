@@ -220,7 +220,7 @@ security:
 ## github-update: Update GitHub repository with current changes
 github-update:
 	@echo "Updating GitHub repository..."
-	@scripts/github-update.sh
+	@scripts/sh/github-update.sh
 
 ## github-release: Create and push a new tag to GitHub
 github-release:
@@ -230,7 +230,7 @@ github-release:
 		echo "Usage: make github-release VERSION=v1.0.0"; \
 		exit 1; \
 	fi
-	@scripts/github-release.sh -v $(VERSION)
+	@scripts/sh/github-release.sh -v $(VERSION)
 
 ## github-release-local: Create a local release without pushing
 github-release-local:
@@ -254,7 +254,7 @@ prepare-release:
 		echo "Usage: make prepare-release VERSION=v1.0.0"; \
 		exit 1; \
 	fi
-	@scripts/prepare-release.sh $(VERSION)
+	@scripts/sh/prepare-release.sh $(VERSION)
 
 ## examples: Run all example applications
 examples:
