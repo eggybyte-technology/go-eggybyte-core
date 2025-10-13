@@ -191,7 +191,7 @@ func generateServiceGoMod(projectName, serviceName string) error {
 go 1.25.1
 
 require (
-	github.com/eggybyte-technology/go-eggybyte-core v1.0.1
+	github.com/eggybyte-technology/go-eggybyte-core v1.0.0
 )
 
 // For local development, uncomment the replace directive below

@@ -128,7 +128,7 @@ temp/
 site/
 docs/_build/
 
-# Example build artifacts and generated projects
+# Example build artifacts
 examples/*/bin/
 examples/*/dist/
 examples/*/build/
@@ -137,17 +137,7 @@ examples/*/.packages
 examples/*/.flutter-plugins
 examples/*/.flutter-plugins-dependencies
 examples/*/pubspec.lock
-examples/*/node_modules/
-examples/*/android/app/build/
-examples/*/ios/build/
-examples/*/web/build/
-examples/*/macos/build/
-examples/*/linux/build/
-examples/*/windows/build/
-
-# Generated test projects (ignore entire directories)
-examples/test-*/
-examples/standalone_*/
+examples/*/pubspec.yaml
 
 # Test data (keep structure but ignore generated files)
 testdata/*.generated.*
@@ -160,3 +150,28 @@ tmp/
 
 # Local development
 .local/
+
+# Generated project files from ebcctl
+examples/*/go.mod
+examples/*/go.sum
+examples/*/cmd/
+examples/*/internal/
+examples/*/README.md
+examples/*/ENV.md
+examples/*/Dockerfile
+examples/*/.gitignore
+examples/*/Makefile
+examples/*/docker-compose.yml
+examples/*/api/
+examples/*/backend/
+examples/*/frontend/
+examples/*/scripts/
+
+# Flutter specific
+*.iml
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store

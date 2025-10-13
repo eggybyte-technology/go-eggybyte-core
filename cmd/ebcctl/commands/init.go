@@ -43,7 +43,7 @@ Creates a new directory with the service name containing:
 Examples:
   ebcctl init backend user-service
   ebcctl init backend payment-service --module github.com/myorg/payment
-  ebcctl init backend auth-service --core-source github --core-version v1.0.1
+  ebcctl init backend auth-service --core-source github --core-version v1.0.0
   ebcctl init backend user-service --core-source local`,
 		Args: cobra.ExactArgs(1),
 		RunE: runInitBackend,

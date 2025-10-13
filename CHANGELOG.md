@@ -5,27 +5,25 @@ All notable changes to EggyByte Core will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v1.0.1] - 2025-10-14
+## [Unreleased]
 
 ### Added
-- Enhanced ebcctl frontend generation with smart directory detection
-- Support for multiple frontend applications in full-stack projects
-- Automatic frontend project placement in `frontend/{project-name}/` structure
-- Improved project structure detection for better organization
-- Enhanced .gitignore patterns for Flutter and generated test projects
+- Enhanced ebcctl frontend generation with automatic full-stack project detection
+- Support for multiple frontend applications in single repository
+- Improved frontend directory structure: `frontend/{project-name}/` instead of direct `frontend/`
+- Enhanced logging system with color encoding and structured output
+- Comprehensive .gitignore updates for generated project files
 
 ### Changed
-- Updated ebcctl frontend generation to create nested directory structure
-- Modified `ebcctl init frontend` to detect full-stack projects automatically
-- Enhanced project templates with updated frontend directory structure
-- Improved README generation with correct frontend paths
-- Updated Makefile templates to reflect new frontend structure
+- Frontend generation now creates apps in `frontend/{project-name}/` directory
+- Updated ebcctl to detect full-stack projects and place frontend apps accordingly
+- Enhanced project structure documentation and README generation
+- Improved Makefile targets for frontend project management
 
 ### Fixed
-- Frontend directory structure now supports multiple applications
-- Fixed frontend generation in full-stack projects to use proper nesting
-- Corrected documentation paths in generated projects
-- Enhanced .gitignore to properly exclude generated test projects
+- Frontend directory structure issue in full-stack project generation
+- Generated project files now properly excluded from git tracking
+- Fixed ebcctl frontend command to work correctly in full-stack projects
 
 ## [v1.0.0] - 2025-10-13
 
