@@ -52,7 +52,7 @@ func TestInit_InvalidFormat(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid log format")
-	assert.Contains(t, err.Error(), "must be 'json' or 'console'")
+	assert.Contains(t, err.Error(), "must be 'json', 'console', 'colorful', or 'simple'")
 }
 
 // TestInit_AllLogLevels tests initialization with all valid log levels.
