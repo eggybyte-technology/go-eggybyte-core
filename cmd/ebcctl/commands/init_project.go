@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var (
@@ -234,7 +236,7 @@ func main() {
 func generateServiceREADME(projectName, serviceName string) error {
 	readmePath := filepath.Join(projectName, "backend", "services", serviceName, "README.md")
 
-	name := strings.Title(serviceName)
+	name := cases.Title(language.English).String(serviceName)
 	content := fmt.Sprintf(`# %s Service
 
 %s microservice for %s platform.
@@ -440,7 +442,7 @@ func generateRootProjectFiles(projectName string) error {
 
 // generateProjectREADME generates the project README.
 func generateProjectREADME(projectName string) string {
-	name := strings.Title(strings.ReplaceAll(projectName, "-", " "))
+	name := cases.Title(language.English).String(strings.ReplaceAll(projectName, "-", " "))
 	return fmt.Sprintf(`# %s
 
 Full-stack application built with EggyByte technology stack.

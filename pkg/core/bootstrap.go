@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/eggybyte-technology/go-eggybyte-core/pkg/cache"
 	"github.com/eggybyte-technology/go-eggybyte-core/pkg/config"
 	"github.com/eggybyte-technology/go-eggybyte-core/pkg/db"
 	"github.com/eggybyte-technology/go-eggybyte-core/pkg/log"
@@ -51,6 +50,7 @@ import (
 //	if err := core.Bootstrap(cfg, httpServer, grpcServer); err != nil {
 //	    log.Fatal("Bootstrap failed", log.Field{Key: "error", Value: err})
 //	}
+//
 // BootstrapWithContext is the same as Bootstrap but accepts a context for cancellation.
 // This is useful for testing and scenarios where you need to control the lifecycle.
 func BootstrapWithContext(ctx context.Context, cfg *config.Config, businessServices ...service.Service) error {
@@ -147,7 +147,7 @@ func initializeLogging(cfg *config.Config) error {
 }
 
 // registerInitializers registers infrastructure initializers with the launcher.
-// Registers database and cache initializers if configuration is provided.
+// Registers database initializer if configuration is provided.
 func registerInitializers(launcher *service.Launcher, cfg *config.Config) error {
 	// Database initializer (conditional)
 	if cfg.DatabaseDSN != "" {
@@ -166,23 +166,6 @@ func registerInitializers(launcher *service.Launcher, cfg *config.Config) error 
 		log.Info("Database initializer registered")
 	} else {
 		log.Info("No database DSN provided, skipping database initialization")
-	}
-
-	// Cache initializer (conditional)
-	if len(cfg.CacheServers) > 0 {
-		cacheConfig := &cache.Config{
-			Servers:         cfg.CacheServers,
-			MaxIdleConns:    cfg.CacheMaxIdleConns,
-			Timeout:         cfg.CacheTimeout,
-			ConnectTimeout:  cfg.CacheConnectTimeout,
-		}
-
-		cacheInit := cache.NewCacheInitializer(cacheConfig)
-		launcher.AddInitializer(cacheInit)
-
-		log.Info("Cache initializer registered")
-	} else {
-		log.Info("No cache servers provided, skipping cache initialization")
 	}
 
 	return nil

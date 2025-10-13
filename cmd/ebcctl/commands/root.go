@@ -10,6 +10,10 @@ import (
 var (
 	// verbose enables detailed output during command execution
 	verbose bool
+	// useLocalCore specifies whether to use local core dependency
+	useLocalCore bool
+	// coreVersion specifies the core version to use when not using local
+	coreVersion string
 
 	// rootCmd is the base command for ebcctl CLI
 	rootCmd = &cobra.Command{
@@ -48,6 +52,10 @@ func init() {
 	// Global flags available to all subcommands
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false,
 		"Enable verbose output for debugging")
+	rootCmd.PersistentFlags().BoolVar(&useLocalCore, "local-core", false,
+		"Use local eggybyte-core dependency instead of GitHub version")
+	rootCmd.PersistentFlags().StringVar(&coreVersion, "core-version", "latest",
+		"Specify eggybyte-core version to use (ignored when --local-core is set)")
 
 	// Add subcommands
 	rootCmd.AddCommand(initCmd)
@@ -76,4 +84,20 @@ func logDebug(format string, args ...interface{}) {
 // logSuccess prints a success message with emphasis.
 func logSuccess(format string, args ...interface{}) {
 	fmt.Fprintf(os.Stdout, "\n🎉 "+format+"\n", args...)
+}
+
+// getCoreDependency returns the core dependency string based on flags.
+func getCoreDependency() string {
+	if useLocalCore {
+		return `github.com/eggybyte-technology/go-eggybyte-core v0.0.0-00010101000000-000000000000`
+	}
+	return fmt.Sprintf(`github.com/eggybyte-technology/go-eggybyte-core %s`, coreVersion)
+}
+
+// getCoreReplace returns the replace directive for local core dependency.
+func getCoreReplace() string {
+	if useLocalCore {
+		return `replace github.com/eggybyte-technology/go-eggybyte-core => ../../go-eggybyte-core`
+	}
+	return ""
 }

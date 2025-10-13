@@ -4,7 +4,7 @@
 
 **Enterprise-Grade Go Microservice Foundation for Modern Cloud-Native Applications**
 
-[![Go Version](https://img.shields.io/badge/Go-1.25.1+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.24.5+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Release](https://img.shields.io/badge/Release-v1.0.0-blue.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -51,7 +51,7 @@ Single port serves Prometheus metrics, health checks, liveness and readiness pro
 Context-aware logging with automatic request ID tracking. JSON or console output with configurable levels.
 
 ### 🗄️ **Database Integration**
-Production-ready TiDB/MySQL support with connection pooling, transaction management, and GORM integration.
+Production-ready MySQL/TiDB support with connection pooling, transaction management, and GORM integration.
 
 ### 🛠️ **Code Generation**
 Powerful CLI tool (`ebcctl`) generates production-ready backends, frontends, and complete full-stack projects.
@@ -146,7 +146,10 @@ go-eggybyte-core/
 ├── 🎯 examples/         Practical examples and demos
 ├── ⚙️  configs/         Configuration templates
 ├── 🚀 deployments/      Docker and Kubernetes deployment configs
-└── 🔧 scripts/          Build and deployment automation
+├── 🔧 scripts/          Build and deployment automation
+├── 🧪 testdata/         Test data and sample configurations
+├── 🤖 .github/          GitHub workflows, templates, and automation
+└── 📋 Makefile          Unified build and development commands
 ```
 
 ### Bootstrap Flow
@@ -251,7 +254,12 @@ user-service/
 ### Create a Flutter Frontend
 
 ```bash
+# Create Flutter app with all platforms (default)
 ebcctl init frontend eggybyte-app
+
+# Create Flutter app with specific platforms only
+ebcctl init frontend mobile-app --platforms android,ios
+ebcctl init frontend web-app --platforms web
 ```
 
 ### Create a Full-Stack Project
@@ -298,6 +306,14 @@ Generates `internal/repositories/order_repository.go` with:
 | `ebcctl new repo <model>` | Generate repository | `ebcctl new repo order` |
 | `ebcctl version` | Show version | `ebcctl version` |
 
+### Global Flags
+
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--local-core` | Use local eggybyte-core dependency | `ebcctl init backend user-service --local-core` |
+| `--core-version <version>` | Specify core version (ignored with --local-core) | `ebcctl init backend user-service --core-version v1.0.0` |
+| `--verbose` | Enable verbose output | `ebcctl init backend user-service --verbose` |
+
 ---
 
 ## ⚙️ Configuration
@@ -320,7 +336,7 @@ LOG_LEVEL=info          # debug | info | warn | error | fatal
 LOG_FORMAT=json         # json | console
 
 # Database (Optional)
-DATABASE_DSN=user:pass@tcp(localhost:4000)/mydb?charset=utf8mb4&parseTime=True
+DATABASE_DSN=user:pass@tcp(localhost:3306)/mydb?charset=utf8mb4&parseTime=True
 DATABASE_MAX_OPEN_CONNS=100
 DATABASE_MAX_IDLE_CONNS=10
 
@@ -352,7 +368,6 @@ All monitoring endpoints served on **port 9090** for Kubernetes compatibility:
   "status": true,
   "checks": {
     "database": "OK",
-    "redis": "OK",
     "external-api": "OK"
   }
 }

@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- Go 1.25.1 or later
+- Go 1.24.5 or later
 - Docker (optional, for local development)
 - Make (optional, for build automation)
 

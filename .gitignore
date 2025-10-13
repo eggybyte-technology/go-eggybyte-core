@@ -17,6 +17,11 @@
 # Go workspace file
 go.work
 
+# Build artifacts
+bin/
+dist/
+build/
+
 # IDE files
 .vscode/
 .idea/
@@ -33,54 +38,108 @@ go.work
 ehthumbs.db
 Thumbs.db
 
-# Build artifacts
-/bin/
-/build/
-/dist/
-
-# Generated files
-/gen/
-/pb/
-
 # Logs
 *.log
+logs/
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Coverage files
-coverage.out
+# Coverage directory used by tools like istanbul
+coverage/
 coverage.html
 
-# Temporary files
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+# Bower dependency directory (https://bower.io/)
+bower_components
+
+# node_modules
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.test
+.env.local
+.env.production
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
 tmp/
 temp/
 
-# Node.js (for examples)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# Flutter (for examples)
-.dart_tool/
-.packages
-.pub-cache/
-.pub/
-build/
-*.dart.js
-*.dart.js.map
-*.dart.js.symbols
+# Documentation build
+site/
+docs/_build/
 
-# Generated protobuf files
-*.pb.go
-*.pb.gw.go
+# Example build artifacts
+examples/*/bin/
+examples/*/dist/
 
-# Test coverage
-*.cover
-*.coverprofile
+# Test data (keep structure but ignore generated files)
+testdata/*.generated.*
 
 # Air live reload
 tmp/
+
+# Goreleaser
+.goreleaser.yml.bak
+
+# Local development
+.local/

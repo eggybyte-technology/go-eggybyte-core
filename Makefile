@@ -1,7 +1,7 @@
 # EggyByte Core Makefile
 # Enterprise-Grade Go Microservice Foundation
 
-.PHONY: help build test lint clean install release
+.PHONY: help build test lint clean install release deps security examples
 
 # Default target
 .DEFAULT_GOAL := help
@@ -27,13 +27,57 @@ GOVET := $(GOCMD) vet
 CMD_DIR := ./cmd/ebcctl
 BIN_DIR := ./bin
 DIST_DIR := ./dist
+EXAMPLES_DIR := ./examples
 
 ## help: Display this help message
 help:
-	@echo "EggyByte Core - Enterprise-Grade Go Microservice Foundation"
+	@echo "🥚 EggyByte Core - Enterprise-Grade Go Microservice Foundation"
 	@echo ""
-	@echo "Available targets:"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "📋 Available targets:"
+	@echo ""
+	@echo "🔨 Build & Development:"
+	@echo "  build              Build the ebcctl binary"
+	@echo "  build-all          Build binaries for all platforms"
+	@echo "  dev                Development mode with live reload"
+	@echo "  install            Install the binary to GOPATH/bin"
+	@echo "  clean              Clean build artifacts"
+	@echo ""
+	@echo "🧪 Testing & Quality:"
+	@echo "  test               Run tests"
+	@echo "  test-coverage      Run tests with coverage report"
+	@echo "  lint               Run linters"
+	@echo "  fmt                Format code"
+	@echo "  vet                Run go vet"
+	@echo "  check              Run all checks (test, lint, vet, fmt)"
+	@echo "  ci                 Run CI pipeline locally"
+	@echo ""
+	@echo "📦 Dependencies & Modules:"
+	@echo "  deps               Download dependencies"
+	@echo "  deps-update        Update dependencies"
+	@echo "  mod-tidy           Tidy go modules"
+	@echo "  mod-verify         Verify go modules"
+	@echo ""
+	@echo "🔒 Security & Scanning:"
+	@echo "  security           Run security checks"
+	@echo ""
+	@echo "🚀 Release & Deployment:"
+	@echo "  release            Create a release (requires goreleaser)"
+	@echo "  release-snapshot   Create a snapshot release"
+	@echo "  github-update      Update GitHub repository with current changes"
+	@echo "  github-release     Create and push a new tag to GitHub"
+	@echo "  github-release-local Create a local release without pushing"
+	@echo "  prepare-release    Prepare project for release (usage: make prepare-release VERSION=v1.0.0)"
+	@echo ""
+	@echo "📚 Examples & Documentation:"
+	@echo "  examples           Run all example applications"
+	@echo "  examples-build     Build all example applications"
+	@echo "  examples-clean     Clean example build artifacts"
+	@echo "  docs-serve         Serve documentation locally"
+	@echo "  docs-build         Build documentation"
+	@echo ""
+	@echo "ℹ️  Info & Utilities:"
+	@echo "  version            Show version information"
+	@echo "  info               Show project information"
 
 ## build: Build the ebcctl binary
 build:
@@ -94,12 +138,13 @@ mod-verify:
 	$(GOMOD) verify
 
 ## clean: Clean build artifacts
-clean:
+clean: examples-clean
 	@echo "Cleaning build artifacts..."
 	$(GOCLEAN)
 	@rm -rf $(BIN_DIR)
 	@rm -rf $(DIST_DIR)
 	@rm -f coverage.out coverage.html
+	@rm -rf site/
 
 ## install: Install the binary to GOPATH/bin
 install: build
@@ -200,4 +245,92 @@ github-release-local:
 	else \
 		echo "goreleaser not installed. Install with: go install github.com/goreleaser/goreleaser@latest"; \
 		exit 1; \
+	fi
+
+## prepare-release: Prepare project for release (usage: make prepare-release VERSION=v1.0.0)
+prepare-release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION variable is required"; \
+		echo "Usage: make prepare-release VERSION=v1.0.0"; \
+		exit 1; \
+	fi
+	@scripts/prepare-release.sh $(VERSION)
+
+## examples: Run all example applications
+examples:
+	@echo "Running example applications..."
+	@for example in $(EXAMPLES_DIR)/*; do \
+		if [ -d "$$example" ] && [ -f "$$example/go.mod" ]; then \
+			echo "Running example: $$(basename $$example)"; \
+			cd $$example && go run . && cd -; \
+		fi; \
+	done
+
+## examples-build: Build all example applications
+examples-build:
+	@echo "Building example applications..."
+	@for example in $(EXAMPLES_DIR)/*; do \
+		if [ -d "$$example" ] && [ -f "$$example/go.mod" ]; then \
+			echo "Building example: $$(basename $$example)"; \
+			cd $$example && go build -o bin/example . && cd -; \
+		fi; \
+	done
+
+## examples-clean: Clean example build artifacts
+examples-clean:
+	@echo "Cleaning example build artifacts..."
+	@for example in $(EXAMPLES_DIR)/*; do \
+		if [ -d "$$example" ]; then \
+			rm -rf $$example/bin; \
+		fi; \
+	done
+
+## docs-serve: Serve documentation locally
+docs-serve:
+	@echo "Serving documentation..."
+	@if command -v mkdocs >/dev/null 2>&1; then \
+		mkdocs serve; \
+	else \
+		echo "mkdocs not installed. Install with: pip install mkdocs"; \
+		echo "Serving README.md with python http server instead..."; \
+		python3 -m http.server 8000; \
+	fi
+
+## docs-build: Build documentation
+docs-build:
+	@echo "Building documentation..."
+	@if command -v mkdocs >/dev/null 2>&1; then \
+		mkdocs build; \
+	else \
+		echo "mkdocs not installed. Install with: pip install mkdocs"; \
+		echo "Documentation available in docs/ directory"; \
+	fi
+
+## info: Show project information
+info:
+	@echo "🥚 EggyByte Core Project Information"
+	@echo "====================================="
+	@echo "Version: $(VERSION)"
+	@echo "Commit: $(COMMIT)"
+	@echo "Date: $(DATE)"
+	@echo "Binary: $(BINARY_NAME)"
+	@echo "Go Version: $(shell go version)"
+	@echo "Module: $(shell go list -m)"
+	@echo ""
+	@echo "📁 Project Structure:"
+	@echo "  cmd/        - Command-line applications"
+	@echo "  pkg/        - Library packages"
+	@echo "  examples/   - Example applications"
+	@echo "  docs/       - Documentation"
+	@echo "  testdata/   - Test data and fixtures"
+	@echo "  .github/    - GitHub workflows and templates"
+	@echo ""
+	@echo "🔧 Available Tools:"
+	@echo "  ebcctl      - CLI tool for code generation"
+	@echo ""
+	@echo "📊 Test Coverage:"
+	@if [ -f "coverage.out" ]; then \
+		echo "  Coverage: $$(go tool cover -func=coverage.out | grep total | awk '{print $$3}')"; \
+	else \
+		echo "  Run 'make test-coverage' to generate coverage report"; \
 	fi

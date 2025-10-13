@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var (
@@ -52,12 +54,6 @@ Examples:
 
 	// goVersion is the Go version to use
 	goVersion string
-
-	// coreSource specifies whether to use local or GitHub version of go-eggybyte-core
-	coreSource string
-
-	// coreVersion specifies the version of go-eggybyte-core to use (when coreSource is "github")
-	coreVersion string
 )
 
 // init registers flags for the init commands
@@ -67,10 +63,6 @@ func init() {
 		"Go module path (default: github.com/eggybyte-technology/<service-name>)")
 	initBackendCmd.Flags().StringVar(&goVersion, "go-version", "1.25.1",
 		"Go version to use in go.mod")
-	initBackendCmd.Flags().StringVar(&coreSource, "core-source", "local",
-		"Source for go-eggybyte-core: 'local' or 'github'")
-	initBackendCmd.Flags().StringVar(&coreVersion, "core-version", "v1.0.0",
-		"Version of go-eggybyte-core to use (when core-source is 'github')")
 
 	// Add subcommands to init
 	initCmd.AddCommand(initBackendCmd)
@@ -93,8 +85,8 @@ func runInitBackend(cmd *cobra.Command, args []string) error {
 	logInfo("Initializing new service: %s", serviceName)
 	logDebug("Module path: %s", modulePath)
 	logDebug("Go version: %s", goVersion)
-	logDebug("Core source: %s", coreSource)
-	if coreSource == "github" {
+	logDebug("Using local core: %v", useLocalCore)
+	if !useLocalCore {
 		logDebug("Core version: %s", coreVersion)
 	}
 
@@ -221,30 +213,30 @@ func printSuccessMessage(serviceName string) {
 // Template generators (simplified versions)
 
 func generateGoMod(serviceName string) string {
-	if coreSource == "local" {
+	coreDep := getCoreDependency()
+	coreReplace := getCoreReplace()
+
+	if coreReplace != "" {
 		return fmt.Sprintf(`module %s
 
 go %s
 
 require (
-	github.com/eggybyte-technology/go-eggybyte-core v0.1.0
+	%s
 )
 
-// Local development - adjust path to point to go-eggybyte-core
-// Example: if go-eggybyte-core is in parent directory, use ../go-eggybyte-core
-// Example: if go-eggybyte-core is in sibling directory, use ../go-eggybyte-core
-replace github.com/eggybyte-technology/go-eggybyte-core => ../go-eggybyte-core
-`, modulePath, goVersion)
-	} else {
-		return fmt.Sprintf(`module %s
-
-go %s
-
-require (
-	github.com/eggybyte-technology/go-eggybyte-core %s
-)
-`, modulePath, goVersion, coreVersion)
+%s
+`, modulePath, goVersion, coreDep, coreReplace)
 	}
+
+	return fmt.Sprintf(`module %s
+
+go %s
+
+require (
+	%s
+)
+`, modulePath, goVersion, coreDep)
 }
 
 func generateMainGo(serviceName string) string {
@@ -270,7 +262,7 @@ func main() {
 }
 
 func generateREADME(serviceName string) string {
-	name := strings.Title(strings.ReplaceAll(serviceName, "-", " "))
+	name := cases.Title(language.English).String(strings.ReplaceAll(serviceName, "-", " "))
 	return fmt.Sprintf(`# %s
 
 ## Overview

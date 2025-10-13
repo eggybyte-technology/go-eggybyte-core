@@ -28,19 +28,24 @@ Creates a new Flutter project directory containing:
 
 Example:
   ebcctl init frontend eggybyte-app
-  ebcctl init frontend mobile-app --org com.mycompany`,
+  ebcctl init frontend mobile-app --org com.mycompany --platforms android,ios
+  ebcctl init frontend web-app --platforms web`,
 		Args: cobra.ExactArgs(1),
 		RunE: runInitFrontend,
 	}
 
 	// organization is the Flutter app organization
 	organization string
+	// platforms specifies which platforms to include
+	platforms string
 )
 
 // init registers flags for the init frontend command
 func init() {
 	initFrontendCmd.Flags().StringVarP(&organization, "org", "o", "com.eggybyte",
 		"Organization identifier for the Flutter app")
+	initFrontendCmd.Flags().StringVarP(&platforms, "platforms", "p", "android,ios,web",
+		"Comma-separated list of platforms to include (android,ios,web,linux,macos,windows)")
 
 	// Add to parent init command
 	initCmd.AddCommand(initFrontendCmd)
@@ -57,6 +62,7 @@ func runInitFrontend(cmd *cobra.Command, args []string) error {
 
 	logInfo("Initializing Flutter project: %s", appName)
 	logDebug("Organization: %s", organization)
+	logDebug("Platforms: %s", platforms)
 
 	// Check if Flutter is installed
 	if err := checkFlutterInstalled(); err != nil {
@@ -124,7 +130,7 @@ func createFlutterProject(appName string) error {
 
 	cmd := exec.Command("flutter", "create",
 		"--org", organization,
-		"--platforms", "android,ios,web",
+		"--platforms", platforms,
 		appName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

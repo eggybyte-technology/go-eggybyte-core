@@ -2,7 +2,6 @@ package config
 
 import (
 	"sync"
-	"time"
 )
 
 // Config holds common configuration for EggyByte services.
@@ -65,19 +64,6 @@ type Config struct {
 
 	// K8sConfigMapName is the name of the ConfigMap to watch for config updates.
 	K8sConfigMapName string `envconfig:"K8S_CONFIGMAP_NAME"`
-
-	// CacheServers is a list of Memcached server addresses.
-	// Format: ["host1:port1", "host2:port2"]
-	CacheServers []string `envconfig:"CACHE_SERVERS"`
-
-	// CacheMaxIdleConns sets the maximum number of idle connections per server.
-	CacheMaxIdleConns int `envconfig:"CACHE_MAX_IDLE_CONNS" default:"10"`
-
-	// CacheTimeout sets the connection timeout for cache operations.
-	CacheTimeout time.Duration `envconfig:"CACHE_TIMEOUT" default:"5s"`
-
-	// CacheConnectTimeout sets the initial connection timeout for cache.
-	CacheConnectTimeout time.Duration `envconfig:"CACHE_CONNECT_TIMEOUT" default:"5s"`
 }
 
 var (

@@ -251,7 +251,7 @@ func init() {
 `
 
 	t := template.Must(template.New("repository").Parse(tmpl))
-	
+
 	var buf strings.Builder
 	err := t.Execute(&buf, struct {
 		PackageName string
@@ -264,11 +264,11 @@ func init() {
 		ModelStruct: modelStruct,
 		TableName:   tableName,
 	})
-	
+
 	if err != nil {
 		panic(err)
 	}
-	
+
 	return buf.String()
 }
 
