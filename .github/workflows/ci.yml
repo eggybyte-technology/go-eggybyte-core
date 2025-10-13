@@ -106,7 +106,7 @@ jobs:
         go build -ldflags="-s -w" -o ebcctl-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }} ./cmd/ebcctl
     
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ebcctl-${{ matrix.goos }}-${{ matrix.goarch }}
         path: ebcctl-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
