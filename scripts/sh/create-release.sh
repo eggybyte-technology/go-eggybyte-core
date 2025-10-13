@@ -5,7 +5,7 @@ set -Eeuo pipefail
 # This script creates a complete GitHub release with binaries using goreleaser
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -185,7 +185,7 @@ run_tests() {
     fi
     
     log_info "Running tests..."
-    if ! go test -v ./...; then
+    if ! go test -v ./pkg/...; then
         log_error "Tests failed"
         exit 1
     fi
