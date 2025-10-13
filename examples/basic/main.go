@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -49,20 +48,20 @@ type SimpleHTTPServer struct {
 
 func (s *SimpleHTTPServer) Start(ctx context.Context) error {
 	log.Info("Starting HTTP server", log.Field{Key: "port", Value: s.port})
-	
+
 	// Simulate server startup
 	time.Sleep(100 * time.Millisecond)
-	
+
 	log.Info("HTTP server started successfully")
 	return nil
 }
 
 func (s *SimpleHTTPServer) Stop(ctx context.Context) error {
 	log.Info("Stopping HTTP server")
-	
+
 	// Simulate graceful shutdown
 	time.Sleep(50 * time.Millisecond)
-	
+
 	log.Info("HTTP server stopped")
 	return nil
 }
