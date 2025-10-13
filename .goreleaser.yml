@@ -1,4 +1,6 @@
 # GoReleaser configuration for ebcctl
+version: 2
+
 builds:
   - id: ebcctl
     binary: ebcctl
@@ -69,17 +71,18 @@ release:
     ### Manual Installation
     Download the appropriate binary for your platform from the assets below.
 
-dockers:
-  - image_templates:
-      - "eggybyte/ebcctl:{{ .Version }}"
-      - "eggybyte/ebcctl:latest"
-    dockerfile: Dockerfile
-    build_flag_templates:
-      - --label=org.opencontainers.image.title={{ .ProjectName }}
-      - --label=org.opencontainers.image.description={{ .ProjectName }}
-      - --label=org.opencontainers.image.url=https://github.com/eggybyte-technology/go-eggybyte-core
-      - --label=org.opencontainers.image.source=https://github.com/eggybyte-technology/go-eggybyte-core
-      - --label=org.opencontainers.image.version={{ .Version }}
-      - --label=org.opencontainers.image.created={{ .Date }}
-      - --label=org.opencontainers.image.revision={{ .FullCommit }}
-      - --label=org.opencontainers.image.licenses=MIT
+# Docker builds disabled for now - focus on binary releases
+# dockers:
+#   - image_templates:
+#       - "eggybyte/ebcctl:{{ .Version }}"
+#       - "eggybyte/ebcctl:latest"
+#     dockerfile: Dockerfile
+#     build_flag_templates:
+#       - --label=org.opencontainers.image.title={{ .ProjectName }}
+#       - --label=org.opencontainers.image.description={{ .ProjectName }}
+#       - --label=org.opencontainers.image.url=https://github.com/eggybyte-technology/go-eggybyte-core
+#       - --label=org.opencontainers.image.source=https://github.com/eggybyte-technology/go-eggybyte-core
+#       - --label=org.opencontainers.image.version={{ .Version }}
+#       - --label=org.opencontainers.image.created={{ .Date }}
+#       - --label=org.opencontainers.image.revision={{ .FullCommit }}
+#       - --label=org.opencontainers.image.licenses=MIT
