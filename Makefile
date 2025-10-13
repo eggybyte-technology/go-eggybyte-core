@@ -67,6 +67,8 @@ help:
 	@echo "  github-release     Create and push a new tag to GitHub"
 	@echo "  github-release-local Create a local release without pushing"
 	@echo "  prepare-release    Prepare project for release (usage: make prepare-release VERSION=v1.0.0)"
+	@echo "  create-release     Create complete GitHub release with binaries (usage: make create-release VERSION=v1.0.0)"
+	@echo "  create-release-force Force create release even if tag exists (usage: make create-release-force VERSION=v1.0.0)"
 	@echo ""
 	@echo "📚 Examples & Documentation:"
 	@echo "  examples           Run all example applications"
@@ -255,6 +257,24 @@ prepare-release:
 		exit 1; \
 	fi
 	@scripts/sh/prepare-release.sh $(VERSION)
+
+## create-release: Create complete GitHub release with binaries (usage: make create-release VERSION=v1.0.0)
+create-release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION variable is required"; \
+		echo "Usage: make create-release VERSION=v1.0.0"; \
+		exit 1; \
+	fi
+	@scripts/sh/create-release.sh -v $(VERSION)
+
+## create-release-force: Force create release even if tag exists (usage: make create-release-force VERSION=v1.0.0)
+create-release-force:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION variable is required"; \
+		echo "Usage: make create-release-force VERSION=v1.0.0"; \
+		exit 1; \
+	fi
+	@scripts/sh/create-release.sh -v $(VERSION) --force
 
 ## examples: Run all example applications
 examples:
