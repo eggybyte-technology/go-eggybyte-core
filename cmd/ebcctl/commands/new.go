@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"unicode"
+	"text/template"
 
 	"github.com/spf13/cobra"
 )
@@ -14,303 +14,277 @@ var (
 	// newCmd is the parent command for code generation
 	newCmd = &cobra.Command{
 		Use:   "new",
-		Short: "Generate new code (repo, service, handler)",
-		Long: `Generate new code components for your microservice.
+		Short: "Generate new code components",
+		Long: `Generate various code components:
+  - repo: Create a new repository with auto-registration
+  - service: Create a new service template
+  - handler: Create a new handler template
 
-Available subcommands:
-  repo    - Generate repository with auto-registration
-  service - Generate service layer code
-
-All generated code follows EggyByte standards and includes
-comprehensive English documentation.`,
+Use 'ebcctl new <type> <name>' to generate code.`,
 	}
 
-	// newRepoCmd generates repository code
+	// newRepoCmd generates a new repository
 	newRepoCmd = &cobra.Command{
 		Use:   "repo <model-name>",
-		Short: "Generate repository code with auto-registration",
-		Long: `Generate repository code with automatic table registration.
+		Short: "Generate a new repository with auto-registration",
+		Long: `Generate a new repository file with:
+  - Model definition with GORM tags
+  - Repository struct with CRUD methods
+  - Auto-registration via init() function
+  - Complete documentation and examples
 
-Creates a repository file in internal/repositories/ with:
-  - Repository struct and interface
-  - TableName() implementation
-  - InitTable() with AutoMigrate
-  - Auto-registration via init()
+The model name will be converted to proper case:
+  - user -> User (model), users (table)
+  - order-item -> OrderItem (model), order_items (table)
 
-Example:
+Examples:
   ebcctl new repo user
-  ebcctl new repo order`,
+  ebcctl new repo order-item
+  ebcctl new repo product-category`,
 		Args: cobra.ExactArgs(1),
 		RunE: runNewRepo,
 	}
 )
 
+// init registers the new subcommands
 func init() {
 	newCmd.AddCommand(newRepoCmd)
 }
 
-// runNewRepo generates a new repository file.
+// runNewRepo executes the new repo command to generate repository code.
 func runNewRepo(cmd *cobra.Command, args []string) error {
 	modelName := args[0]
 
-	// Validate we're in a service project
-	if err := validateInProject(); err != nil {
+	// Validate model name
+	if err := validateModelName(modelName); err != nil {
 		return err
 	}
 
-	// Generate names
-	structName := toStructName(modelName)
-	tableName := toTableName(modelName)
-	fileName := fmt.Sprintf("%s_repository.go", strings.ToLower(modelName))
-
-	logInfo("Generating repository for model: %s", modelName)
-	logDebug("Struct name: %s", structName)
-	logDebug("Table name: %s", tableName)
-	logDebug("File name: %s", fileName)
-
-	// Generate repository file
-	repoPath := filepath.Join("internal", "repositories", fileName)
-	content := generateRepositoryCode(modelName, structName, tableName)
-
-	if err := os.WriteFile(repoPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write repository file: %w", err)
-	}
-
-	logSuccess("Repository generated: %s", repoPath)
-	fmt.Println("\nNext steps:")
-	fmt.Println("  1. Define your model struct in the repository file")
-	fmt.Println("  2. Import the repository package in main.go:")
-	fmt.Printf("     import _ \"<module-path>/internal/repositories\"\n")
-	fmt.Println("  3. The table will auto-migrate on service startup!")
-	fmt.Println()
-
-	return nil
-}
-
-// validateInProject checks if we're inside a service project.
-func validateInProject() error {
-	if _, err := os.Stat("go.mod"); os.IsNotExist(err) {
+	// Check if we're in a Go project
+	if !isGoProject() {
 		return fmt.Errorf("not in a Go project directory (go.mod not found)")
 	}
 
-	if _, err := os.Stat("internal"); os.IsNotExist(err) {
-		return fmt.Errorf("not in a service project (internal/ directory not found)")
+	// Check if internal/repositories directory exists
+	repoDir := "internal/repositories"
+	if _, err := os.Stat(repoDir); os.IsNotExist(err) {
+		return fmt.Errorf("internal/repositories directory not found. Run 'ebcctl init backend <name>' first")
+	}
+
+	// Generate repository file
+	if err := generateRepositoryFile(modelName); err != nil {
+		return fmt.Errorf("failed to generate repository: %w", err)
+	}
+
+	logSuccess("Repository '%s' generated successfully!", modelName)
+	fmt.Println("\nNext steps:")
+	fmt.Println("  1. Implement your business logic in the repository methods")
+	fmt.Println("  2. Import the repository package in your main.go:")
+	fmt.Printf("     import _ \"%s/internal/repositories\"\n", getModuleName())
+	fmt.Println("  3. Use the repository in your services:")
+	fmt.Printf("     repo := repositories.New%sRepository(db.GetDB())\n", toTitleCase(modelName))
+
+	return nil
+}
+
+// validateModelName checks if the model name is valid.
+func validateModelName(name string) error {
+	if name == "" {
+		return fmt.Errorf("model name cannot be empty")
+	}
+
+	// Check for valid characters (lowercase, numbers, hyphens)
+	for _, char := range name {
+		if !((char >= 'a' && char <= 'z') ||
+			(char >= '0' && char <= '9') ||
+			char == '-') {
+			return fmt.Errorf("model name must contain only lowercase letters, numbers, and hyphens")
+		}
 	}
 
 	return nil
 }
 
-// toStructName converts model name to struct name (PascalCase).
-func toStructName(name string) string {
-	// Remove hyphens and underscores, capitalize each word
-	words := strings.FieldsFunc(name, func(r rune) bool {
-		return r == '-' || r == '_'
-	})
+// isGoProject checks if we're in a Go project directory.
+func isGoProject() bool {
+	_, err := os.Stat("go.mod")
+	return !os.IsNotExist(err)
+}
 
-	for i, word := range words {
-		if len(word) > 0 {
-			words[i] = strings.ToUpper(string(word[0])) + word[1:]
+// getModuleName extracts the module name from go.mod.
+func getModuleName() string {
+	content, err := os.ReadFile("go.mod")
+	if err != nil {
+		return "your-module"
+	}
+
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "module ") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "module "))
 		}
 	}
 
-	return strings.Join(words, "")
+	return "your-module"
 }
 
-// toTableName converts model name to table name (snake_case, plural).
-func toTableName(name string) string {
-	// Convert to snake_case
-	var result strings.Builder
-	for i, r := range name {
-		if i > 0 && unicode.IsUpper(r) {
-			result.WriteRune('_')
-		}
-		result.WriteRune(unicode.ToLower(r))
+// generateRepositoryFile generates the repository file from template.
+func generateRepositoryFile(modelName string) error {
+	fileName := fmt.Sprintf("%s_repository.go", modelName)
+	filePath := filepath.Join("internal/repositories", fileName)
+
+	// Check if file already exists
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		return fmt.Errorf("repository file '%s' already exists", fileName)
 	}
 
-	tableName := strings.ReplaceAll(result.String(), "-", "_")
+	// Generate content from template
+	content := generateRepositoryTemplate(modelName)
 
-	// Simple pluralization (add 's')
-	if !strings.HasSuffix(tableName, "s") {
-		tableName += "s"
+	// Write file
+	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write repository file: %w", err)
 	}
 
-	return tableName
+	logInfo("Generated repository file: %s", fileName)
+	return nil
 }
 
-// generateRepositoryCode generates the repository file content.
-func generateRepositoryCode(modelName, structName, tableName string) string {
-	return fmt.Sprintf(`package repositories
+// generateRepositoryTemplate generates the repository code template.
+func generateRepositoryTemplate(modelName string) string {
+	modelStruct := toTitleCase(modelName)
+	tableName := toTableName(modelName)
+	packageName := "repositories"
+
+	tmpl := `package {{.PackageName}}
 
 import (
 	"context"
+	"time"
 
 	"gorm.io/gorm"
-
-	"github.com/eggybyte-technology/go-eggybyte-core/db"
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/db"
 )
 
-// %s represents the %s data model.
-// TODO: Add your model fields here
-//
-// Example:
-//
-//	type %s struct {
-//	    ID        uint      `+"`gorm:\"primaryKey\"`"+`
-//	    CreatedAt time.Time
-//	    UpdatedAt time.Time
-//	    // Add your fields here
-//	}
-type %s struct {
-	ID uint `+"`gorm:\"primaryKey\"`"+`
-	// TODO: Add your model fields
+// {{.ModelStruct}} represents the {{.ModelName}} entity in the database.
+// This struct defines the data model with GORM tags for database mapping.
+type {{.ModelStruct}} struct {
+	ID        uint           ` + "`gorm:\"primaryKey\"`" + `
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt ` + "`gorm:\"index\"`" + `
+	
+	// Add your fields here
+	// Example:
+	// Name  string ` + "`gorm:\"size:255;not null\"`" + `
+	// Email string ` + "`gorm:\"size:255;uniqueIndex;not null\"`" + `
 }
 
-// %sRepository handles database operations for %s models.
-// It implements the Repository interface for automatic table initialization.
-type %sRepository struct {
+// {{.ModelStruct}}Repository provides data access methods for {{.ModelStruct}}.
+// This repository implements the db.Repository interface for auto-registration.
+type {{.ModelStruct}}Repository struct {
 	db *gorm.DB
 }
 
-// %sRepositoryInterface defines the contract for %s repository operations.
-type %sRepositoryInterface interface {
-	// Create inserts a new %s record into the database
-	Create(ctx context.Context, model *%s) error
-
-	// FindByID retrieves a %s by its ID
-	FindByID(ctx context.Context, id uint) (*%s, error)
-
-	// Update modifies an existing %s record
-	Update(ctx context.Context, model *%s) error
-
-	// Delete removes a %s record by ID
-	Delete(ctx context.Context, id uint) error
-}
-
-// New%sRepository creates a new instance of %sRepository.
-// Note: The database connection is injected during InitTable().
-//
-// Returns:
-//   - *%sRepository: Repository instance ready for registration
-func New%sRepository() *%sRepository {
-	return &%sRepository{}
+// New{{.ModelStruct}}Repository creates a new repository instance.
+func New{{.ModelStruct}}Repository(db *gorm.DB) *{{.ModelStruct}}Repository {
+	return &{{.ModelStruct}}Repository{db: db}
 }
 
 // TableName returns the database table name for this repository.
-// Implements the Repository interface.
-//
-// Returns:
-//   - string: The table name used in the database
-func (r *%sRepository) TableName() string {
-	return "%s"
+// This method is required by the db.Repository interface.
+func (r *{{.ModelStruct}}Repository) TableName() string {
+	return "{{.TableName}}"
 }
 
-// InitTable performs table creation and schema migration.
-// This method is called automatically during database initialization.
-// Implements the Repository interface.
-//
-// Parameters:
-//   - ctx: Context for timeout control and cancellation
-//   - db: GORM database connection to use for operations
-//
-// Returns:
-//   - error: Returns error if table creation or migration fails
-func (r *%sRepository) InitTable(ctx context.Context, database *gorm.DB) error {
-	r.db = database
-	return r.db.WithContext(ctx).AutoMigrate(&%s{})
+// InitTable initializes the database table for this repository.
+// This method is called automatically during service startup.
+func (r *{{.ModelStruct}}Repository) InitTable(ctx context.Context, db *gorm.DB) error {
+	r.db = db
+	return db.WithContext(ctx).AutoMigrate(&{{.ModelStruct}}{})
 }
 
-// Create inserts a new %s record into the database.
-//
-// Parameters:
-//   - ctx: Context for timeout control and cancellation
-//   - model: The %s instance to create
-//
-// Returns:
-//   - error: Returns error if creation fails
-func (r *%sRepository) Create(ctx context.Context, model *%s) error {
-	return r.db.WithContext(ctx).Create(model).Error
+// Create creates a new {{.ModelName}} record in the database.
+func (r *{{.ModelStruct}}Repository) Create(ctx context.Context, {{.ModelName}} *{{.ModelStruct}}) error {
+	return r.db.WithContext(ctx).Create({{.ModelName}}).Error
 }
 
-// FindByID retrieves a %s by its ID.
-//
-// Parameters:
-//   - ctx: Context for timeout control and cancellation
-//   - id: The unique identifier of the %s
-//
-// Returns:
-//   - *%s: The found %s instance
-//   - error: Returns error if not found or query fails
-func (r *%sRepository) FindByID(ctx context.Context, id uint) (*%s, error) {
-	var model %s
-	err := r.db.WithContext(ctx).First(&model, id).Error
-	return &model, err
+// GetByID retrieves a {{.ModelName}} by its ID.
+func (r *{{.ModelStruct}}Repository) GetByID(ctx context.Context, id uint) (*{{.ModelStruct}}, error) {
+	var {{.ModelName}} {{.ModelStruct}}
+	err := r.db.WithContext(ctx).First(&{{.ModelName}}, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &{{.ModelName}}, nil
 }
 
-// Update modifies an existing %s record.
-//
-// Parameters:
-//   - ctx: Context for timeout control and cancellation
-//   - model: The %s instance with updated fields
-//
-// Returns:
-//   - error: Returns error if update fails
-func (r *%sRepository) Update(ctx context.Context, model *%s) error {
-	return r.db.WithContext(ctx).Save(model).Error
+// Update updates an existing {{.ModelName}} record.
+func (r *{{.ModelStruct}}Repository) Update(ctx context.Context, {{.ModelName}} *{{.ModelStruct}}) error {
+	return r.db.WithContext(ctx).Save({{.ModelName}}).Error
 }
 
-// Delete removes a %s record by ID.
-//
-// Parameters:
-//   - ctx: Context for timeout control and cancellation
-//   - id: The unique identifier of the %s to delete
-//
-// Returns:
-//   - error: Returns error if deletion fails
-func (r *%sRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&%s{}, id).Error
+// Delete soft deletes a {{.ModelName}} record.
+func (r *{{.ModelStruct}}Repository) Delete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&{{.ModelStruct}}{}, id).Error
 }
 
-// init registers this repository for automatic table initialization.
-// This function is called automatically when the package is imported.
+// List retrieves all {{.ModelName}} records with pagination.
+func (r *{{.ModelStruct}}Repository) List(ctx context.Context, offset, limit int) ([]*{{.ModelStruct}}, error) {
+	var {{.ModelName}}s []*{{.ModelStruct}}
+	err := r.db.WithContext(ctx).Offset(offset).Limit(limit).Find(&{{.ModelName}}s).Error
+	return {{.ModelName}}s, err
+}
+
+// Count returns the total number of {{.ModelName}} records.
+func (r *{{.ModelStruct}}Repository) Count(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&{{.ModelStruct}}{}).Count(&count).Error
+	return count, err
+}
+
+// Auto-register this repository with the database registry.
+// This init() function is called automatically when the package is imported.
 func init() {
-	db.RegisterRepository(New%sRepository())
+	db.RegisterRepository(&{{.ModelStruct}}Repository{})
 }
-`,
-		// Model type definition
-		structName, modelName, structName, structName,
+`
 
-		// Repository struct
-		structName, modelName, structName,
+	t := template.Must(template.New("repository").Parse(tmpl))
+	
+	var buf strings.Builder
+	err := t.Execute(&buf, struct {
+		PackageName string
+		ModelName   string
+		ModelStruct string
+		TableName   string
+	}{
+		PackageName: packageName,
+		ModelName:   modelName,
+		ModelStruct: modelStruct,
+		TableName:   tableName,
+	})
+	
+	if err != nil {
+		panic(err)
+	}
+	
+	return buf.String()
+}
 
-		// Interface definition
-		structName, modelName, structName,
-		modelName, structName,
-		modelName, structName,
-		modelName, structName,
-		modelName,
+// toTitleCase converts a kebab-case string to TitleCase.
+func toTitleCase(s string) string {
+	parts := strings.Split(s, "-")
+	for i, part := range parts {
+		if len(part) > 0 {
+			parts[i] = strings.ToUpper(string(part[0])) + part[1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
 
-		// Constructor
-		structName, structName, structName, structName, structName, structName,
-
-		// TableName
-		structName, tableName,
-
-		// InitTable
-		structName, structName,
-
-		// Create
-		structName, structName, structName, structName,
-
-		// FindByID
-		structName, structName, structName, structName, structName, structName, structName,
-
-		// Update
-		structName, structName, structName, structName,
-
-		// Delete
-		structName, structName, structName, structName,
-
-		// init registration
-		structName,
-	)
+// toTableName converts a kebab-case string to snake_case table name.
+func toTableName(s string) string {
+	// Convert hyphens to underscores and add 's' for plural
+	return strings.ReplaceAll(s, "-", "_") + "s"
 }

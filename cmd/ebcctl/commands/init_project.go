@@ -207,9 +207,9 @@ func generateServiceMain(projectName, serviceName string) error {
 	content := fmt.Sprintf(`package main
 
 import (
-	"github.com/eggybyte-technology/go-eggybyte-core/config"
-	"github.com/eggybyte-technology/go-eggybyte-core/core"
-	"github.com/eggybyte-technology/go-eggybyte-core/log"
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/config"
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/core"
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/log"
 
 	// Import repositories for auto-registration
 	_ "%s/backend/services/%s/internal/repositories"
@@ -296,7 +296,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/eggybyte-technology/go-eggybyte-core/db"
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/db"
 )
 
 // %s represents the %s data model.

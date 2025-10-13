@@ -1,0 +1,85 @@
+# GoReleaser configuration for ebcctl
+builds:
+  - id: ebcctl
+    binary: ebcctl
+    main: ./cmd/ebcctl
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - id: ebcctl
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: tar.gz
+    files:
+      - README.md
+      - LICENSE
+      - CHANGELOG.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+release:
+  github:
+    owner: eggybyte-technology
+    name: go-eggybyte-core
+  draft: false
+  prerelease: auto
+  mode: replace
+  name_template: "{{ .ProjectName }} {{ .Version }}"
+  header: |
+    ## What's Changed
+    
+    Full Changelog: https://github.com/eggybyte-technology/go-eggybyte-core/compare/{{ .PreviousTag }}...{{ .Tag }}
+  
+  footer: |
+    ## Installation
+    
+    ### Using Go
+    ```bash
+    go install github.com/eggybyte-technology/go-eggybyte-core/cmd/ebcctl@{{ .Tag }}
+    ```
+    
+    ### Using Homebrew (macOS)
+    ```bash
+    brew install eggybyte-technology/tap/ebcctl
+    ```
+    
+    ### Manual Installation
+    Download the appropriate binary for your platform from the assets below.
+
+dockers:
+  - image_templates:
+      - "eggybyte/ebcctl:{{ .Version }}"
+      - "eggybyte/ebcctl:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/eggybyte-technology/go-eggybyte-core
+      - --label=org.opencontainers.image.source=https://github.com/eggybyte-technology/go-eggybyte-core
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT

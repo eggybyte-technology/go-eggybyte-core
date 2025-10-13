@@ -1,0 +1,71 @@
+# Docker Compose for EggyByte Core development environment
+version: '3.8'
+
+services:
+  # MySQL Database (TiDB Compatible)
+  database:
+    image: mysql:8.0
+    container_name: eggybyte-db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=test
+    volumes:
+      - db_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Memcached Cache
+  memcached:
+    image: memcached:1.6-alpine
+    container_name: eggybyte-memcached
+    ports:
+      - "11211:11211"
+    command: ["-m", "64", "-I", "1m"]
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "11211"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Example Service (built with EggyByte Core)
+  example-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eggybyte-example-service
+    ports:
+      - "8080:8080"  # HTTP API
+      - "9090:9090"  # Metrics
+      - "8081:8081"  # Health checks
+    environment:
+      - SERVICE_NAME=example-service
+      - ENVIRONMENT=development
+      - DATABASE_DSN=test:test@tcp(database:3306)/test?charset=utf8mb4&parseTime=True&loc=Local
+      - CACHE_SERVERS=memcached:11211
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=console
+    depends_on:
+      database:
+        condition: service_healthy
+      memcached:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  db_data:
+
+networks:
+  default:
+    name: eggybyte-network

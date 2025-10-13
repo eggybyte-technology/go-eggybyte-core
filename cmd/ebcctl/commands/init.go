@@ -38,9 +38,11 @@ Creates a new directory with the service name containing:
   - Dockerfile for containerization
   - .gitignore with Go best practices
 
-Example:
+Examples:
   ebcctl init backend user-service
-  ebcctl init backend payment-service --module github.com/myorg/payment`,
+  ebcctl init backend payment-service --module github.com/myorg/payment
+  ebcctl init backend auth-service --core-source github --core-version v1.0.0
+  ebcctl init backend user-service --core-source local`,
 		Args: cobra.ExactArgs(1),
 		RunE: runInitBackend,
 	}
@@ -50,6 +52,12 @@ Example:
 
 	// goVersion is the Go version to use
 	goVersion string
+
+	// coreSource specifies whether to use local or GitHub version of go-eggybyte-core
+	coreSource string
+
+	// coreVersion specifies the version of go-eggybyte-core to use (when coreSource is "github")
+	coreVersion string
 )
 
 // init registers flags for the init commands
@@ -59,6 +67,10 @@ func init() {
 		"Go module path (default: github.com/eggybyte-technology/<service-name>)")
 	initBackendCmd.Flags().StringVar(&goVersion, "go-version", "1.25.1",
 		"Go version to use in go.mod")
+	initBackendCmd.Flags().StringVar(&coreSource, "core-source", "local",
+		"Source for go-eggybyte-core: 'local' or 'github'")
+	initBackendCmd.Flags().StringVar(&coreVersion, "core-version", "v1.0.0",
+		"Version of go-eggybyte-core to use (when core-source is 'github')")
 
 	// Add subcommands to init
 	initCmd.AddCommand(initBackendCmd)
@@ -81,6 +93,10 @@ func runInitBackend(cmd *cobra.Command, args []string) error {
 	logInfo("Initializing new service: %s", serviceName)
 	logDebug("Module path: %s", modulePath)
 	logDebug("Go version: %s", goVersion)
+	logDebug("Core source: %s", coreSource)
+	if coreSource == "github" {
+		logDebug("Core version: %s", coreVersion)
+	}
 
 	// Create project structure
 	if err := createProjectStructure(serviceName); err != nil {
@@ -205,7 +221,8 @@ func printSuccessMessage(serviceName string) {
 // Template generators (simplified versions)
 
 func generateGoMod(serviceName string) string {
-	return fmt.Sprintf(`module %s
+	if coreSource == "local" {
+		return fmt.Sprintf(`module %s
 
 go %s
 
@@ -215,17 +232,28 @@ require (
 
 // Local development - adjust path to point to go-eggybyte-core
 // Example: if go-eggybyte-core is in parent directory, use ../go-eggybyte-core
+// Example: if go-eggybyte-core is in sibling directory, use ../go-eggybyte-core
 replace github.com/eggybyte-technology/go-eggybyte-core => ../go-eggybyte-core
 `, modulePath, goVersion)
+	} else {
+		return fmt.Sprintf(`module %s
+
+go %s
+
+require (
+	github.com/eggybyte-technology/go-eggybyte-core %s
+)
+`, modulePath, goVersion, coreVersion)
+	}
 }
 
 func generateMainGo(serviceName string) string {
 	return `package main
 
 import (
-	"github.com/eggybyte-technology/go-eggybyte-core/config"
-	"github.com/eggybyte-technology/go-eggybyte-core/core"
-	"github.com/eggybyte-technology/go-eggybyte-core/log"
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/config"
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/core"
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/log"
 )
 
 func main() {
