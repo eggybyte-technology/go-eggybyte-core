@@ -101,7 +101,7 @@ build-all:
 ## test: Run tests
 test:
 	@echo "Running tests..."
-	$(GOTEST) -v -race -coverprofile=coverage.out ./...
+	$(GOTEST) -v -race -coverprofile=coverage.out ./pkg/...
 
 ## test-coverage: Run tests with coverage report
 test-coverage: test
