@@ -185,7 +185,7 @@ run_tests() {
     fi
     
     log_info "Running tests..."
-    if ! go test -v -race=false ./...; then
+    if ! go test -v ./...; then
         log_error "Tests failed"
         exit 1
     fi
