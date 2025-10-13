@@ -101,7 +101,7 @@ build-all:
 ## test: Run tests
 test:
 	@echo "Running tests..."
-	$(GOTEST) -v -race -coverprofile=coverage.out ./pkg/...
+	$(GOTEST) -v -race -coverprofile=coverage.out ./...
 
 ## test-coverage: Run tests with coverage report
 test-coverage: test
@@ -274,7 +274,7 @@ create-release-force:
 		echo "Usage: make create-release-force VERSION=v1.0.0"; \
 		exit 1; \
 	fi
-	@scripts/sh/create-release.sh -v $(VERSION) --force
+	@scripts/sh/create-release.sh -v $(VERSION) -f
 
 ## examples: Run all example applications
 examples:
