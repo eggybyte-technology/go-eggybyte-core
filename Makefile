@@ -25,7 +25,7 @@ GOVET := $(GOCMD) vet
 
 # Directories
 CMD_DIR := ./cmd/ebcctl
-BIN_DIR := ./bin
+BIN_DIR := ../../bin
 DIST_DIR := ./dist
 EXAMPLES_DIR := ./examples
 
@@ -72,6 +72,7 @@ help:
 	@echo ""
 	@echo "📚 Examples & Documentation:"
 	@echo "  examples           Run all example applications"
+	@echo "  log-demo          Run the enhanced logging demonstration"
 	@echo "  examples-build     Build all example applications"
 	@echo "  examples-clean     Clean example build artifacts"
 	@echo "  docs-serve         Serve documentation locally"
@@ -86,6 +87,7 @@ build:
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BIN_DIR)
 	$(GOBUILD) $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(CMD_DIR)
+	@echo "Binary built successfully: $(BIN_DIR)/$(BINARY_NAME)"
 
 ## build-all: Build binaries for all platforms
 build-all:
@@ -143,7 +145,7 @@ mod-verify:
 clean: examples-clean
 	@echo "Cleaning build artifacts..."
 	$(GOCLEAN)
-	@rm -rf $(BIN_DIR)
+	@rm -rf ./bin
 	@rm -rf $(DIST_DIR)
 	@rm -f coverage.out coverage.html
 	@rm -rf site/
@@ -285,6 +287,11 @@ examples:
 			cd $$example && go run . && cd -; \
 		fi; \
 	done
+
+## log-demo: Run the enhanced logging demonstration
+log-demo:
+	@echo "Running enhanced logging demo..."
+	@cd examples/log-demo && go run .
 
 ## examples-build: Build all example applications
 examples-build:

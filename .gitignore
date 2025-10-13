@@ -128,9 +128,26 @@ temp/
 site/
 docs/_build/
 
-# Example build artifacts
+# Example build artifacts and generated projects
 examples/*/bin/
 examples/*/dist/
+examples/*/build/
+examples/*/.dart_tool/
+examples/*/.packages
+examples/*/.flutter-plugins
+examples/*/.flutter-plugins-dependencies
+examples/*/pubspec.lock
+examples/*/node_modules/
+examples/*/android/app/build/
+examples/*/ios/build/
+examples/*/web/build/
+examples/*/macos/build/
+examples/*/linux/build/
+examples/*/windows/build/
+
+# Generated test projects (ignore entire directories)
+examples/test-*/
+examples/standalone_*/
 
 # Test data (keep structure but ignore generated files)
 testdata/*.generated.*

@@ -191,7 +191,7 @@ func generateServiceGoMod(projectName, serviceName string) error {
 go 1.25.1
 
 require (
-	github.com/eggybyte-technology/go-eggybyte-core v1.0.0
+	github.com/eggybyte-technology/go-eggybyte-core v1.0.1
 )
 
 // For local development, uncomment the replace directive below
@@ -394,15 +394,22 @@ func generateFrontendApp(projectName string) error {
 		return nil
 	}
 
-	// Generate Flutter app in frontend directory
-	frontendPath := filepath.Join(projectName, "frontend")
+	// Generate Flutter app in frontend/{project-name} directory
+	// This allows for multiple frontend projects in the same repository
+	frontendDir := filepath.Join(projectName, "frontend")
+	appDir := filepath.Join(frontendDir, projectName)
 	appName := strings.ReplaceAll(projectName, "-", "_") + "_app"
+
+	// Create frontend directory first
+	if err := os.MkdirAll(frontendDir, 0755); err != nil {
+		return fmt.Errorf("failed to create frontend directory: %w", err)
+	}
 
 	cmd := exec.Command("flutter", "create",
 		"--org", "com.eggybyte",
 		"--project-name", appName,
 		"--platforms", "android,ios,web",
-		frontendPath)
+		appDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -452,7 +459,8 @@ Full-stack application built with EggyByte technology stack.
 - `+"`backend/`"+` - Backend microservices (Go)
   - `+"`services/auth/`"+` - Authentication service
   - `+"`services/user/`"+` - User management service
-- `+"`frontend/`"+` - Flutter application (Android/iOS/Web)
+- `+"`frontend/`"+` - Frontend applications directory
+  - `+"`frontend/` + projectName + `/`"+` - Main Flutter application (Android/iOS/Web)
 - `+"`api/`"+` - Shared API definitions (Protocol Buffers)
 - `+"`scripts/`"+` - Build and deployment scripts
 
@@ -483,7 +491,7 @@ go run cmd/main.go
 ### 2. Run Frontend
 
 `+"```bash"+`
-cd frontend
+cd frontend/`+projectName+`
 flutter pub get
 flutter run
 `+"```"+`
@@ -502,7 +510,7 @@ go run cmd/main.go
 ### Frontend Development
 
 `+"```bash"+`
-cd frontend
+cd frontend/`+projectName+`
 flutter run -d chrome  # Run on web
 flutter run            # Run on mobile device/emulator
 `+"```"+`
@@ -548,7 +556,7 @@ Common variables:
 
 ### Frontend
 
-Configure API endpoints in `+"`frontend/lib/config/api_config.dart`"+`.
+Configure API endpoints in `+"`frontend/` + projectName + `/lib/config/api_config.dart`"+`.
 
 ## Testing
 
@@ -561,7 +569,7 @@ make test-backend
 ### Frontend Tests
 
 `+"```bash"+`
-cd frontend
+cd frontend/`+projectName+`
 flutter test
 `+"```"+`
 
@@ -604,7 +612,7 @@ test-backend:
 
 ## test-frontend: Run frontend tests
 test-frontend:
-	cd frontend && flutter test
+	cd frontend/` + projectName + ` && flutter test
 
 ## test-all: Run all tests
 test-all: test-backend test-frontend
@@ -617,7 +625,7 @@ docker-build-all:
 ## clean: Clean build artifacts
 clean:
 	rm -rf backend/services/*/bin
-	cd frontend && flutter clean
+	cd frontend/` + projectName + ` && flutter clean
 `
 }
 
@@ -726,13 +734,14 @@ func printProjectSuccessMessage(projectName string) {
 	fmt.Println("  ├── backend/services/")
 	fmt.Println("  │   ├── auth/      - Authentication service")
 	fmt.Println("  │   └── user/      - User management service")
-	fmt.Println("  ├── frontend/      - Flutter application")
+	fmt.Println("  ├── frontend/      - Frontend applications directory")
+	fmt.Printf("  │   └── %s/     - Main Flutter application\n", projectName)
 	fmt.Println("  ├── api/           - API definitions")
 	fmt.Println("  └── Makefile       - Build management")
 	fmt.Println("\nNext steps:")
 	fmt.Printf("  1. cd %s\n", projectName)
 	fmt.Println("  2. Start services: make dev-up")
-	fmt.Println("  3. Run frontend: cd frontend && flutter run")
+	fmt.Printf("  3. Run frontend: cd frontend/%s && flutter run\n", projectName)
 	fmt.Println("\nFor more information, see README.md")
 	fmt.Println()
 }

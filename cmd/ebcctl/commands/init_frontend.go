@@ -69,18 +69,25 @@ func runInitFrontend(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Determine target directory - check if we're in a full-stack project
+	targetDir := appName
+	if isInFullStackProject() {
+		targetDir = filepath.Join("frontend", appName)
+		logInfo("Detected full-stack project, creating frontend in: %s", targetDir)
+	}
+
 	// Create Flutter project
-	if err := createFlutterProject(appName); err != nil {
+	if err := createFlutterProjectInDir(appName, targetDir); err != nil {
 		return fmt.Errorf("failed to create Flutter project: %w", err)
 	}
 
 	// Customize Flutter project
-	if err := customizeFlutterProject(appName); err != nil {
+	if err := customizeFlutterProject(targetDir); err != nil {
 		return fmt.Errorf("failed to customize Flutter project: %w", err)
 	}
 
 	// Print success message
-	printFlutterSuccessMessage(appName)
+	printFlutterSuccessMessage(targetDir)
 
 	return nil
 }
@@ -124,14 +131,39 @@ func checkFlutterInstalled() error {
 	return nil
 }
 
-// createFlutterProject creates a new Flutter project using flutter create.
-func createFlutterProject(appName string) error {
-	logInfo("Creating Flutter project...")
+// isInFullStackProject checks if we're in a full-stack project directory.
+func isInFullStackProject() bool {
+	// Check for indicators of a full-stack project
+	if _, err := os.Stat("backend"); err == nil {
+		return true
+	}
+	if _, err := os.Stat("frontend"); err == nil {
+		return true
+	}
+	if _, err := os.Stat("Makefile"); err == nil {
+		// Check if Makefile contains full-stack project indicators
+		content, err := os.ReadFile("Makefile")
+		if err == nil && strings.Contains(string(content), "frontend") {
+			return true
+		}
+	}
+	return false
+}
+
+// createFlutterProjectInDir creates a new Flutter project in the specified directory.
+func createFlutterProjectInDir(appName, targetDir string) error {
+	logInfo("Creating Flutter project in: %s", targetDir)
+
+	// Create target directory if it doesn't exist
+	if err := os.MkdirAll(filepath.Dir(targetDir), 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
 
 	cmd := exec.Command("flutter", "create",
 		"--org", organization,
 		"--platforms", platforms,
-		appName)
+		"--project-name", appName,
+		targetDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -412,10 +444,10 @@ Copyright © 2025 EggyByte Technology
 }
 
 // printFlutterSuccessMessage prints the success message for Flutter project creation.
-func printFlutterSuccessMessage(appName string) {
-	logSuccess("Flutter project '%s' initialized successfully!", appName)
+func printFlutterSuccessMessage(targetDir string) {
+	logSuccess("Flutter project initialized successfully!")
 	fmt.Println("\nNext steps:")
-	fmt.Printf("  1. cd %s\n", appName)
+	fmt.Printf("  1. cd %s\n", targetDir)
 	fmt.Println("  2. Copy .env.example to .env and configure")
 	fmt.Println("  3. Install dependencies: flutter pub get")
 	fmt.Println("  4. Run the app: flutter run")

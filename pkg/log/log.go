@@ -78,14 +78,18 @@ var globalLogger Logger
 //
 // Parameters:
 //   - level: Log level threshold. Valid values: "debug", "info", "warn", "error", "fatal"
-//   - format: Log output format. Valid values: "json" (structured), "console" (human-readable)
+//   - format: Log output format. Valid values:
+//   - "json" (structured JSON output)
+//   - "console" (enhanced colorful human-readable output)
+//   - "colorful" (rich colors with bold formatting)
+//   - "simple" (basic console output without colors)
 //
 // Returns:
 //   - error: Returns error if level or format is invalid
 //
 // Example:
 //
-//	if err := log.Init("info", "json"); err != nil {
+//	if err := log.Init("info", "colorful"); err != nil {
 //	    panic(fmt.Sprintf("Failed to initialize logger: %v", err))
 //	}
 //	defer log.Default().Sync()
@@ -104,12 +108,26 @@ func Init(level, format string) error {
 		encoderConfig.TimeKey = "timestamp"
 		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
-	case "console":
+	case "console", "colorful":
 		encoderConfig := zap.NewDevelopmentEncoderConfig()
 		encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
+		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+		encoderConfig.EncodeName = zapcore.FullNameEncoder
+		encoderConfig.ConsoleSeparator = " "
+		encoderConfig.EncodeDuration = zapcore.StringDurationEncoder
+		encoder = NewEnhancedColorfulEncoder(encoderConfig)
+	case "simple":
+		encoderConfig := zap.NewDevelopmentEncoderConfig()
+		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
+		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+		encoderConfig.EncodeName = zapcore.FullNameEncoder
+		encoderConfig.ConsoleSeparator = " "
+		encoderConfig.EncodeDuration = zapcore.StringDurationEncoder
 		encoder = zapcore.NewConsoleEncoder(encoderConfig)
 	default:
-		return fmt.Errorf("invalid log format '%s': must be 'json' or 'console'", format)
+		return fmt.Errorf("invalid log format '%s': must be 'json', 'console', 'colorful', or 'simple'", format)
 	}
 
 	// Build zap logger with stdout output

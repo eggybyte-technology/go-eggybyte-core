@@ -5,6 +5,28 @@ All notable changes to EggyByte Core will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.1] - 2025-10-14
+
+### Added
+- Enhanced ebcctl frontend generation with smart directory detection
+- Support for multiple frontend applications in full-stack projects
+- Automatic frontend project placement in `frontend/{project-name}/` structure
+- Improved project structure detection for better organization
+- Enhanced .gitignore patterns for Flutter and generated test projects
+
+### Changed
+- Updated ebcctl frontend generation to create nested directory structure
+- Modified `ebcctl init frontend` to detect full-stack projects automatically
+- Enhanced project templates with updated frontend directory structure
+- Improved README generation with correct frontend paths
+- Updated Makefile templates to reflect new frontend structure
+
+### Fixed
+- Frontend directory structure now supports multiple applications
+- Fixed frontend generation in full-stack projects to use proper nesting
+- Corrected documentation paths in generated projects
+- Enhanced .gitignore to properly exclude generated test projects
+
 ## [v1.0.0] - 2025-10-13
 
 ### Added

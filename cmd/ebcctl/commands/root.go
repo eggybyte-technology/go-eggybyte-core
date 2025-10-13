@@ -34,7 +34,7 @@ All generated code follows EggyByte quality standards:
   - Auto-registration patterns (repositories via init())
   - Standard three-layer architecture
   - Proper error handling and logging`,
-		Version: "1.0.0",
+		Version: "1.0.1",
 	}
 )
 
