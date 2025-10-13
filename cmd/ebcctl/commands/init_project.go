@@ -182,11 +182,8 @@ func generateBackendServices(projectName string) error {
 func generateServiceGoMod(projectName, serviceName string) error {
 	modPath := filepath.Join(projectName, "backend", "services", serviceName, "go.mod")
 
-	// Calculate relative path from service to go-eggybyte-core
-	// From: examples/demo-platform/backend/services/auth
-	// To:   go-eggybyte-core
-	// Path: ../../../../../
-
+	// Generate go.mod that uses remote version by default
+	// For local development, users can uncomment the replace directive
 	content := fmt.Sprintf(`module %s/backend/services/%s
 
 go 1.25.1
@@ -195,10 +192,10 @@ require (
 	github.com/eggybyte-technology/go-eggybyte-core v1.0.0
 )
 
-// Local development - adjust path based on your directory structure
-// Path is relative from backend/services/%s to go-eggybyte-core root
-replace github.com/eggybyte-technology/go-eggybyte-core => ../../../../../
-`, projectModulePath, serviceName, serviceName)
+// For local development, uncomment the replace directive below
+// and adjust the path to point to your local go-eggybyte-core directory
+// replace github.com/eggybyte-technology/go-eggybyte-core => ../../../../../go-eggybyte-core
+`, projectModulePath, serviceName)
 
 	return os.WriteFile(modPath, []byte(content), 0644)
 }
