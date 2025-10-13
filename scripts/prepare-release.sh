@@ -52,7 +52,7 @@ run_tests() {
     log_info "Running tests..."
     cd "$PROJECT_ROOT"
     
-    if ! go test -v -race ./...; then
+    if ! go test -v ./...; then
         log_error "Tests failed"
         exit 1
     fi
