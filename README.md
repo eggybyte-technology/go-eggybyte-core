@@ -1,23 +1,27 @@
-<div align="center">
-
 # 🥚 EggyByte Core
 
-**Enterprise-Grade Go Microservice Foundation for Modern Cloud-Native Applications**
+**Enterprise-Grade Go Microservice Foundation Library**
 
-[![Go Version](https://img.shields.io/badge/Go-1.24.5+-00ADD8?style=flat&logo=go)](https://go.dev/)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/Release-v1.0.0-blue.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/releases)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-
-[Features](#-core-features) • [Quick Start](#-quick-start) • [CLI Tool](#%EF%B8%8F-ebcctl-cli-tool) • [Documentation](#-documentation) • [Examples](#-examples)
+[![Go Version](https://img.shields.io/badge/Go-1.25.1+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/eggybyte-technology/go-eggybyte-core.svg)](https://pkg.go.dev/github.com/eggybyte-technology/go-eggybyte-core)
+[![Test Coverage](https://img.shields.io/badge/Coverage-67.9%25-green.svg)](coverage.html)
+[![Go Report Card](https://goreportcard.com/badge/github.com/eggybyte-technology/go-eggybyte-core)](https://goreportcard.com/report/github.com/eggybyte-technology/go-eggybyte-core)
 
 ---
-
-</div>
 
 ## 📖 Overview
 
 **EggyByte Core** is a powerful, production-ready Go foundation library designed for building scalable microservices with minimal boilerplate. Built on modern best practices and battle-tested patterns, it enables developers to focus on business logic while the framework handles infrastructure concerns.
+
+### 🎯 Project Identity
+
+**EggyByte Core** is a **pure Go library** that provides foundational infrastructure components for microservice development. It does **not** include CLI tools, code generation, or deployment configurations - those are handled by separate projects.
+
+### 🔗 Related Projects
+
+- **[ebcctl](https://github.com/eggybyte-technology/ebcctl)** - Standalone CLI tool for project management and code generation
+- **[go-eggybyte-core](https://github.com/eggybyte-technology/go-eggybyte-core)** - This library (pure Go microservice foundation)
 
 ### 🎯 Philosophy
 
@@ -31,10 +35,6 @@
 
 ## ✨ Core Features
 
-<table>
-<tr>
-<td width="50%">
-
 ### 🚀 **Instant Bootstrap**
 Start your entire microservice with one line of code. No configuration files, no complex setup—just pure productivity.
 
@@ -44,21 +44,14 @@ Tables self-register and auto-migrate via `init()`. Write your models, import th
 ### 📊 **Unified Monitoring**
 Single port serves Prometheus metrics, health checks, liveness and readiness probes—Kubernetes-native from day one.
 
-</td>
-<td width="50%">
-
 ### 📝 **Structured Logging**
 Context-aware logging with automatic request ID tracking. JSON or console output with configurable levels.
 
 ### 🗄️ **Database Integration**
 Production-ready MySQL/TiDB support with connection pooling, transaction management, and GORM integration.
 
-### 🛠️ **Code Generation**
-Powerful CLI tool (`ebcctl`) generates production-ready backends, frontends, and complete full-stack projects.
-
-</td>
-</tr>
-</table>
+### 🛠️ **Extensible Architecture**
+Modular design with clear interfaces for easy extension and customization. Built-in support for custom health checkers, initializers, and service implementations.
 
 ---
 
@@ -66,25 +59,9 @@ Powerful CLI tool (`ebcctl`) generates production-ready backends, frontends, and
 
 ### Installation
 
-#### Install as Library
-
 ```bash
 go get github.com/eggybyte-technology/go-eggybyte-core
 ```
-
-#### Install CLI Tool
-
-```bash
-go install github.com/eggybyte-technology/go-eggybyte-core/cmd/ebcctl@latest
-```
-
-Verify installation:
-
-```bash
-ebcctl version
-```
-
----
 
 ### The 2-Line Microservice
 
@@ -109,23 +86,15 @@ func main() {
 
 **That's it!** Your service now has:
 
-<table>
-<tr>
-<td>✅ Structured logging</td>
-<td>✅ Request ID tracking</td>
-<td>✅ Graceful shutdown</td>
-</tr>
-<tr>
-<td>✅ Health checks (/healthz)</td>
-<td>✅ Liveness probe (/livez)</td>
-<td>✅ Readiness probe (/readyz)</td>
-</tr>
-<tr>
-<td>✅ Prometheus metrics (/metrics)</td>
-<td>✅ Database pooling</td>
-<td>✅ Auto table migration</td>
-</tr>
-</table>
+- ✅ Structured logging
+- ✅ Request ID tracking
+- ✅ Graceful shutdown
+- ✅ Health checks (/healthz)
+- ✅ Liveness probe (/livez)
+- ✅ Readiness probe (/readyz)
+- ✅ Prometheus metrics (/metrics)
+- ✅ Database pooling
+- ✅ Auto table migration
 
 ---
 
@@ -141,15 +110,9 @@ go-eggybyte-core/
 ├── 🗄️  pkg/db/          Database with auto-registration & pooling
 ├── 🚀 pkg/service/      Service launcher & graceful shutdown
 ├── 📊 pkg/monitoring/   Unified metrics & health endpoints
-├── 🛠️  cmd/ebcctl/      CLI tool for code generation
-├── 📚 docs/             Comprehensive documentation
-├── 🎯 examples/         Practical examples and demos
-├── ⚙️  configs/         Configuration templates
-├── 🚀 deployments/      Docker and Kubernetes deployment configs
-├── 🔧 scripts/          Build and deployment automation
-├── 🧪 testdata/         Test data and sample configurations
-├── 🤖 .github/          GitHub workflows, templates, and automation
-└── 📋 Makefile          Unified build and development commands
+├── 📊 pkg/metrics/      Prometheus metrics collection
+├── 🏥 pkg/health/       Health check service implementation
+└── 📚 docs/             Comprehensive documentation
 ```
 
 ### Bootstrap Flow
@@ -222,97 +185,6 @@ func main() {
     db.Find(&users)
 }
 ```
-
----
-
-## 🛠️ ebcctl CLI Tool
-
-The `ebcctl` command-line tool accelerates development through intelligent code generation.
-
-### Create a Backend Microservice
-
-```bash
-ebcctl init backend user-service
-```
-
-**Generated structure:**
-
-```
-user-service/
-├── cmd/main.go              # Bootstrap integration
-├── internal/
-│   ├── handlers/            # HTTP/gRPC handlers
-│   ├── services/            # Business logic
-│   └── repositories/        # Data access
-├── go.mod                   # With core dependency
-├── README.md                # Complete documentation
-├── ENV.md                   # Configuration guide
-├── Dockerfile               # Container ready
-└── .gitignore               # Best practices
-```
-
-### Create a Flutter Frontend
-
-```bash
-# Create Flutter app with all platforms (default)
-ebcctl init frontend eggybyte-app
-
-# Create Flutter app with specific platforms only
-ebcctl init frontend mobile-app --platforms android,ios
-ebcctl init frontend web-app --platforms web
-```
-
-### Create a Full-Stack Project
-
-```bash
-ebcctl init project eggybyte-platform
-```
-
-**Generated structure:**
-
-```
-eggybyte-platform/
-├── backend/
-│   └── services/
-│       ├── auth/            # Authentication service
-│       └── user/            # User management service
-├── frontend/                # Flutter application
-├── api/                     # Shared protobuf definitions
-├── Makefile                 # Unified build management
-├── docker-compose.yml       # Local development
-└── README.md                # Project documentation
-```
-
-### Generate Repository Code
-
-```bash
-cd my-service
-ebcctl new repo order
-```
-
-Generates `internal/repositories/order_repository.go` with:
-- Model definition
-- CRUD operations
-- Auto-registration
-- Complete documentation
-
-### Command Reference
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| `ebcctl init backend <name>` | Create backend microservice | `ebcctl init backend payment-service` |
-| `ebcctl init frontend <name>` | Create Flutter project | `ebcctl init frontend mobile-app` |
-| `ebcctl init project <name>` | Create full-stack project | `ebcctl init project eggybyte-platform` |
-| `ebcctl new repo <model>` | Generate repository | `ebcctl new repo order` |
-| `ebcctl version` | Show version | `ebcctl version` |
-
-### Global Flags
-
-| Flag | Description | Example |
-|------|-------------|---------|
-| `--local-core` | Use local eggybyte-core dependency | `ebcctl init backend user-service --local-core` |
-| `--core-version <version>` | Specify core version (ignored with --local-core) | `ebcctl init backend user-service --core-version v1.0.0` |
-| `--verbose` | Enable verbose output | `ebcctl init backend user-service --verbose` |
 
 ---
 
@@ -538,23 +410,6 @@ launcher.AddInitializer(&CacheInitializer{redisAddr: "localhost:6379"})
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - Design patterns and best practices
 - **[Migration Guide](docs/MIGRATION.md)** - Upgrading from other frameworks
 
-### Examples
-
-- **[Demo Platform](docs/examples/demo-platform/)** - Complete full-stack example
-- **[Microservice Examples](docs/examples/EXAMPLES.md)** - Common patterns and use cases
-
-### Configuration Templates
-
-- **[Configuration Template](configs/templates/config.yaml)** - Complete configuration example
-- **[Docker Deployment](deployments/docker/)** - Docker and Docker Compose configurations
-- **[Kubernetes Deployment](deployments/kubernetes/)** - Kubernetes manifests and configs
-
-### Build and Deployment
-
-- **[Build Script](scripts/build/build.sh)** - Automated build process
-- **[Deploy Script](scripts/deploy/deploy.sh)** - Kubernetes deployment automation
-- **[Makefile](Makefile)** - Unified build and development commands
-
 ---
 
 ## 💡 Best Practices
@@ -564,39 +419,13 @@ launcher.AddInitializer(&CacheInitializer{redisAddr: "localhost:6379"})
 3. **Register repositories in init()** - Enable automatic table migration
 4. **Keep methods under 50 lines** - Follow EggyByte code quality standards
 5. **Document public APIs** - Write comprehensive English comments
-6. **Use ebcctl for consistency** - Generate code scaffolds with standardized structure
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these guidelines:
-
-1. **Code Quality Standards**
-   - All public APIs must have English comments
-   - Methods must be under 50 lines
-   - Follow Go best practices and conventions
-
-2. **Testing Requirements**
-   - Run `go test ./...` before submitting
-   - Ensure `go build ./...` succeeds
-   - Add tests for new features
-
-3. **Pull Request Process**
-   - Fork the repository
-   - Create a feature branch
-   - Submit PR with clear description
-   - Ensure CI checks pass
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+6. **Follow Go best practices** - Use standard Go patterns and conventions for maintainable code
 
 ---
 
 ## 📋 Changelog
 
-See [CHANGES.md](CHANGES.md) for version history and release notes.
-
-**Latest Release**: v1.0.0 - [Release Notes](RELEASE_NOTES_v1.0.0.md)
+See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 
 ---
 
@@ -606,41 +435,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Support
-
-Need help? We're here for you:
-
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/eggybyte-technology/go-eggybyte-core/issues)
-- 💬 **Questions**: [GitHub Discussions](https://github.com/eggybyte-technology/go-eggybyte-core/discussions)
-- 📖 **Documentation**: See `/docs` directory
-- ✉️ **Email**: support@eggybyte.com
-
----
-
 ## 🌟 Why EggyByte Core?
 
-<table>
-<tr>
-<td width="33%" align="center">
-
 ### ⚡ **Lightning Fast**
-From idea to production in minutes, not days. Our CLI generates complete, production-ready projects instantly.
-
-</td>
-<td width="33%" align="center">
+From idea to production in minutes, not days. Minimal boilerplate with maximum functionality out of the box.
 
 ### 🛡️ **Battle Tested**
 Used in production by EggyByte microservices. Proven reliability and performance at scale.
 
-</td>
-<td width="33%" align="center">
-
 ### 🎓 **Developer Friendly**
 Intuitive APIs, comprehensive docs, and sensible defaults. Focus on features, not infrastructure.
-
-</td>
-</tr>
-</table>
 
 ---
 

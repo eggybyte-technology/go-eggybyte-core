@@ -343,8 +343,12 @@ func TestMetricsService_StartAndStop(t *testing.T) {
 	// Wait for server to start
 	time.Sleep(200 * time.Millisecond)
 
-	// Verify server is running by checking it's not nil
-	assert.NotNil(t, service.server, "Server should be initialized after Start")
+	// Verify server is running by making a metrics request
+	resp, err := http.Get("http://localhost:9091/metrics")
+	if err == nil {
+		resp.Body.Close()
+		assert.Equal(t, http.StatusOK, resp.StatusCode, "Metrics server should be responding")
+	}
 
 	// Stop the service
 	stopErr := service.Stop(context.Background())

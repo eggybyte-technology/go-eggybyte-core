@@ -30,9 +30,10 @@ var (
 //	metricsService := metrics.NewMetricsService(9090)
 //	launcher.AddService(metricsService)
 type MetricsService struct {
-	port   int
-	server *http.Server
-	logger log.Logger
+	port      int
+	server    *http.Server
+	logger    log.Logger
+	serverMu  sync.RWMutex // Protects server field access
 }
 
 // NewMetricsService creates a new metrics service that listens on the specified port.
@@ -87,6 +88,7 @@ func (m *MetricsService) Start(ctx context.Context) error {
 	mux.Handle("/metrics", promhttp.Handler())
 
 	// Create HTTP server
+	m.serverMu.Lock()
 	m.server = &http.Server{
 		Addr:         fmt.Sprintf(":%d", m.port),
 		Handler:      mux,
@@ -94,6 +96,7 @@ func (m *MetricsService) Start(ctx context.Context) error {
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
+	m.serverMu.Unlock()
 
 	m.logger.Info("Starting metrics server",
 		log.Field{Key: "port", Value: m.port},
@@ -125,13 +128,17 @@ func (m *MetricsService) Start(ctx context.Context) error {
 // Returns:
 //   - error: Returns error if shutdown fails or times out
 func (m *MetricsService) Stop(ctx context.Context) error {
-	if m.server == nil {
+	m.serverMu.RLock()
+	server := m.server
+	m.serverMu.RUnlock()
+	
+	if server == nil {
 		return nil
 	}
 
 	m.logger.Info("Stopping metrics server")
 
-	if err := m.server.Shutdown(ctx); err != nil {
+	if err := server.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to shutdown metrics server: %w", err)
 	}
 

@@ -37,6 +37,7 @@ type HealthService struct {
 	logger   log.Logger
 	checkers []HealthChecker
 	mu       sync.RWMutex
+	serverMu sync.RWMutex // Protects server field access
 }
 
 // NewHealthService creates a new health service on the specified port.
@@ -77,10 +78,12 @@ func (h *HealthService) Start(ctx context.Context) error {
 	mux.HandleFunc("/livez", h.handleLivez)
 	mux.HandleFunc("/readyz", h.handleReadyz)
 
+	h.serverMu.Lock()
 	h.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", h.port),
 		Handler: mux,
 	}
+	h.serverMu.Unlock()
 
 	h.logger.Info("Starting health server",
 		log.Field{Key: "port", Value: h.port})
@@ -108,12 +111,16 @@ func (h *HealthService) Start(ctx context.Context) error {
 // Returns:
 //   - error: Returns error if shutdown fails
 func (h *HealthService) Stop(ctx context.Context) error {
-	if h.server == nil {
+	h.serverMu.RLock()
+	server := h.server
+	h.serverMu.RUnlock()
+	
+	if server == nil {
 		return nil
 	}
 
 	h.logger.Info("Stopping health server")
-	return h.server.Shutdown(ctx)
+	return server.Shutdown(ctx)
 }
 
 // handleLivez handles liveness probe requests.

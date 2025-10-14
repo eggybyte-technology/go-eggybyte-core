@@ -625,53 +625,87 @@ type HealthChecker interface {
 }
 ```
 
-## CLI Tool (`cmd/ebcctl`)
+## Project Structure
 
-### Commands
+### Manual Service Creation
 
-#### init backend
+Since EggyByte Core is a pure library, you'll need to create your service structure manually. Here's the recommended approach:
+
+#### Create Service Directory
 ```bash
-ebcctl init backend <service-name>
+mkdir my-service
+cd my-service
+go mod init my-service
 ```
 
-**Description:** Creates a new backend microservice with complete structure.
-
-**Parameters:**
-- `service-name` - Name of the service to create
-
-**Flags:**
-- `--module, -m` - Go module path (default: github.com/eggybyte-technology/<service-name>)
-- `--go-version` - Go version to use in go.mod (default: 1.25.1)
-- `--core-source` - Source for go-eggybyte-core: 'local' or 'github' (default: local)
-- `--core-version` - Version of go-eggybyte-core to use when core-source is 'github' (default: v1.0.0)
-
-**Example:**
+#### Add Core Dependency
 ```bash
-ebcctl init backend user-service --module github.com/myorg/user-service --core-source github --core-version v1.0.0
+go get github.com/eggybyte-technology/go-eggybyte-core
 ```
 
-#### new repo
+#### Create Basic Structure
 ```bash
-ebcctl new repo <model-name>
+mkdir -p cmd internal/handlers internal/services internal/repositories
 ```
 
-**Description:** Generates a new repository with auto-registration.
+#### Create Main Entry Point
+Create `cmd/main.go`:
+```go
+package main
 
-**Parameters:**
-- `model-name` - Name of the model (e.g., user, order-item)
+import (
+    "github.com/eggybyte-technology/go-eggybyte-core/pkg/config"
+    "github.com/eggybyte-technology/go-eggybyte-core/pkg/core"
+)
 
-**Example:**
-```bash
-ebcctl new repo user
-ebcctl new repo order-item
+func main() {
+    cfg := &config.Config{}
+    config.MustReadFromEnv(cfg)
+    
+    if err := core.Bootstrap(cfg); err != nil {
+        panic(err)
+    }
+}
 ```
 
-#### version
-```bash
-ebcctl version
-```
+### Repository Pattern
 
-**Description:** Shows the version information.
+For database integration, follow this pattern:
+
+```go
+// internal/repositories/user_repository.go
+package repositories
+
+import (
+    "context"
+    "gorm.io/gorm"
+    "github.com/eggybyte-technology/go-eggybyte-core/pkg/db"
+)
+
+type User struct {
+    ID    uint   `gorm:"primaryKey"`
+    Email string `gorm:"uniqueIndex;not null"`
+    Name  string
+}
+
+type UserRepository struct {
+    db *gorm.DB
+}
+
+func (r *UserRepository) TableName() string {
+    return "users"
+}
+
+func (r *UserRepository) InitTable(ctx context.Context, db *gorm.DB) error {
+    r.db = db
+    return db.WithContext(ctx).AutoMigrate(&User{})
+}
+
+// Auto-register on import
+func init() {
+    db.RegisterRepository(&UserRepository{})
+}
+```
 
 ## Error Handling
 

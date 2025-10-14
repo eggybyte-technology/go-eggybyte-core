@@ -13,7 +13,7 @@ import (
 
 // mockInitializer is a test implementation of Initializer interface.
 type mockInitializer struct {
-	initCalled bool
+	initCalled int32 // Use atomic for thread safety
 	initError  error
 	delay      time.Duration
 }
@@ -22,7 +22,7 @@ func (m *mockInitializer) Init(ctx context.Context) error {
 	if m.delay > 0 {
 		time.Sleep(m.delay)
 	}
-	m.initCalled = true
+	atomic.StoreInt32(&m.initCalled, 1)
 	return m.initError
 }
 
@@ -174,8 +174,8 @@ func TestInit_Success(t *testing.T) {
 	err := launcher.Init(ctx)
 
 	assert.NoError(t, err)
-	assert.True(t, init1.initCalled)
-	assert.True(t, init2.initCalled)
+	assert.Equal(t, int32(1), atomic.LoadInt32(&init1.initCalled))
+	assert.Equal(t, int32(1), atomic.LoadInt32(&init2.initCalled))
 }
 
 // TestInit_Empty tests initialization with no initializers.
@@ -205,9 +205,9 @@ func TestInit_Error(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "init failed")
-	assert.True(t, init1.initCalled, "First initializer should be called")
-	assert.True(t, init2.initCalled, "Second initializer should be attempted")
-	assert.False(t, init3.initCalled, "Third initializer should not be called")
+	assert.Equal(t, int32(1), atomic.LoadInt32(&init1.initCalled), "First initializer should be called")
+	assert.Equal(t, int32(1), atomic.LoadInt32(&init2.initCalled), "Second initializer should be attempted")
+	assert.Equal(t, int32(0), atomic.LoadInt32(&init3.initCalled), "Third initializer should not be called")
 }
 
 // TestInit_Order tests that initializers run in registration order.
@@ -218,30 +218,30 @@ func TestInit_Order(t *testing.T) {
 	var callOrder []int
 
 	init1 := &mockInitializer{}
-	init1.initCalled = false
+	atomic.StoreInt32(&init1.initCalled, 0)
 	originalInit1 := func() {
 		callOrder = append(callOrder, 1)
-		init1.initCalled = true
+		atomic.StoreInt32(&init1.initCalled, 1)
 	}
 
 	init2 := &mockInitializer{}
-	init2.initCalled = false
+	atomic.StoreInt32(&init2.initCalled, 0)
 	originalInit2 := func() {
 		callOrder = append(callOrder, 2)
-		init2.initCalled = true
+		atomic.StoreInt32(&init2.initCalled, 1)
 	}
 
 	init3 := &mockInitializer{}
-	init3.initCalled = false
+	atomic.StoreInt32(&init3.initCalled, 0)
 	originalInit3 := func() {
 		callOrder = append(callOrder, 3)
-		init3.initCalled = true
+		atomic.StoreInt32(&init3.initCalled, 1)
 	}
 
 	// Override Init methods to track order
-	init1.initCalled = false
-	init2.initCalled = false
-	init3.initCalled = false
+	atomic.StoreInt32(&init1.initCalled, 0)
+	atomic.StoreInt32(&init2.initCalled, 0)
+	atomic.StoreInt32(&init3.initCalled, 0)
 
 	launcher.AddInitializer(
 		&mockInitializer{},
@@ -498,7 +498,7 @@ func TestRun_Complete(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	// Verify initialization occurred
-	assert.True(t, init1.initCalled)
+	assert.Equal(t, int32(1), atomic.LoadInt32(&init1.initCalled))
 	assert.Equal(t, int32(1), atomic.LoadInt32(&svc.startCalled))
 
 	// Trigger shutdown
@@ -548,7 +548,7 @@ func TestLauncher_NoServices(t *testing.T) {
 	err := launcher.Run(ctx)
 
 	assert.NoError(t, err)
-	assert.True(t, init.initCalled)
+	assert.Equal(t, int32(1), atomic.LoadInt32(&init.initCalled))
 }
 
 // TestLauncher_NoInitializers tests launcher with only services.

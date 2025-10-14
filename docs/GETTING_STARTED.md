@@ -16,16 +16,10 @@
 go get github.com/eggybyte-technology/go-eggybyte-core
 ```
 
-#### Install CLI Tool
+#### Verify Installation
 
 ```bash
-go install github.com/eggybyte-technology/go-eggybyte-core/cmd/ebcctl@latest
-```
-
-Verify installation:
-
-```bash
-ebcctl version
+go list -m github.com/eggybyte-technology/go-eggybyte-core
 ```
 
 ## Your First Microservice
@@ -33,8 +27,9 @@ ebcctl version
 ### Step 1: Create a New Service
 
 ```bash
-ebcctl init backend my-service
+mkdir my-service
 cd my-service
+go mod init my-service
 ```
 
 This creates a complete microservice structure:
@@ -115,7 +110,7 @@ export DATABASE_DSN="test:test@tcp(localhost:3306)/test?charset=utf8mb4&parseTim
 ### Step 3: Generate Repository Code
 
 ```bash
-ebcctl new repo user
+# Create repository manually following the patterns in examples
 ```
 
 This generates `internal/repositories/user_repository.go` with:

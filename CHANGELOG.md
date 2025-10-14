@@ -5,10 +5,53 @@ All notable changes to EggyByte Core will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Comprehensive English documentation for all public APIs
+- Detailed code comments with examples and usage patterns
+- Thread safety documentation for concurrent operations
+- Performance notes and best practices in documentation
+- Contributing guidelines and development standards
+- Apache License 2.0 for open source compatibility
+
+### Changed
+- Converted project to pure Go library (removed CLI tools and deployment configs)
+- Updated license from proprietary to Apache License 2.0
+- Enhanced test coverage and fixed data race conditions
+- Improved error handling and documentation
+- Standardized code formatting and linting
+
+### Fixed
+- Data race conditions in health and metrics services
+- Thread safety issues in test mocks
+- Compilation errors in test files
+- Race conditions in service launcher tests
+
+### Removed
+- CLI command implementations
+- Deployment configurations
+- Binary build targets
+- Release automation for executables
+- Kubernetes deployment files
+
+## [v1.1.0] - 2025-01-01
+
+### Changed
+- **BREAKING**: Separated ebcctl CLI tool into standalone repository
+- Updated project initialization to create minimal structure with ebc.yaml configuration
+- Removed ebcctl-specific build targets from Makefile
+- Updated documentation to reference standalone ebcctl repository
+
+### Removed
+- ebcctl CLI tool (moved to github.com/eggybyte-technology/ebcctl)
+- ebcctl-specific git management commands from Makefile
+- ebcctl-specific release management commands from Makefile
+
 ## [v1.0.1] - 2025-10-14
 
 ### Added
-- Enhanced ebcctl frontend generation with automatic full-stack project detection
+- Enhanced frontend generation with automatic full-stack project detection
 - Support for multiple frontend applications in single repository
 - Improved frontend directory structure: `frontend/{project-name}/` instead of direct `frontend/`
 - Enhanced logging system with color encoding and structured output
@@ -16,14 +59,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Frontend generation now creates apps in `frontend/{project-name}/` directory
-- Updated ebcctl to detect full-stack projects and place frontend apps accordingly
+- Updated project detection to identify full-stack projects and place frontend apps accordingly
 - Enhanced project structure documentation and README generation
 - Improved Makefile targets for frontend project management
 
 ### Fixed
 - Frontend directory structure issue in full-stack project generation
 - Generated project files now properly excluded from git tracking
-- Fixed ebcctl frontend command to work correctly in full-stack projects
+- Fixed frontend command to work correctly in full-stack projects
 
 ## [v1.0.0] - 2025-10-13
 
@@ -60,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Health check endpoints (/healthz, /livez, /readyz)
 - Prometheus metrics exposure (/metrics)
 - Service launcher with graceful shutdown
-- CLI tool (ebcctl) for project scaffolding
+- CLI tool for project scaffolding (now separated to standalone ebcctl repository)
 - Flutter frontend project generation with platform selection
 - Backend microservice generation with local/GitHub dependency support
 - Docker Compose for local development with MySQL
@@ -303,8 +346,8 @@ This is the first stable release of EggyByte Core, providing a comprehensive fou
 #### Getting Started
 
 ```bash
-# Install CLI tool
-go install github.com/eggybyte-technology/go-eggybyte-core/cmd/ebcctl@latest
+# Install CLI tool (now standalone)
+go install github.com/eggybyte-technology/ebcctl@latest
 
 # Create new service
 ebcctl init backend my-service
