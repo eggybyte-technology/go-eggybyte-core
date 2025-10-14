@@ -21,9 +21,16 @@ func TestGet_WhenNotInitialized(t *testing.T) {
 // This is an isolated method test with no external dependencies.
 func TestGet_WhenInitialized(t *testing.T) {
 	expected := &Config{
-		ServiceName: "test-service",
-		Environment: "test",
-		Port:        8080,
+		ServiceName:        "test-service",
+		Environment:        "test",
+		BusinessHTTPPort:   8080,
+		BusinessGRPCPort:   9090,
+		HealthCheckPort:    8081,
+		MetricsPort:        9091,
+		EnableBusinessHTTP: true,
+		EnableBusinessGRPC: true,
+		EnableHealthCheck:  true,
+		EnableMetrics:      true,
 	}
 
 	Set(expected)
@@ -32,7 +39,7 @@ func TestGet_WhenInitialized(t *testing.T) {
 	assert.NotNil(t, result, "Expected non-nil config after initialization")
 	assert.Equal(t, expected.ServiceName, result.ServiceName)
 	assert.Equal(t, expected.Environment, result.Environment)
-	assert.Equal(t, expected.Port, result.Port)
+	assert.Equal(t, expected.BusinessHTTPPort, result.BusinessHTTPPort)
 
 	// Cleanup
 	Set(nil)
@@ -42,8 +49,15 @@ func TestGet_WhenInitialized(t *testing.T) {
 // This is an isolated method test with no external dependencies.
 func TestSet_UpdatesGlobalConfig(t *testing.T) {
 	cfg := &Config{
-		ServiceName: "user-service",
-		Port:        9000,
+		ServiceName:        "user-service",
+		BusinessHTTPPort:   9000,
+		BusinessGRPCPort:   9090,
+		HealthCheckPort:    8081,
+		MetricsPort:        9091,
+		EnableBusinessHTTP: true,
+		EnableBusinessGRPC: true,
+		EnableHealthCheck:  true,
+		EnableMetrics:      true,
 	}
 
 	Set(cfg)
@@ -51,7 +65,7 @@ func TestSet_UpdatesGlobalConfig(t *testing.T) {
 
 	assert.NotNil(t, result)
 	assert.Equal(t, "user-service", result.ServiceName)
-	assert.Equal(t, 9000, result.Port)
+	assert.Equal(t, 9000, result.BusinessHTTPPort)
 
 	// Cleanup
 	Set(nil)
@@ -66,8 +80,15 @@ func TestSet_ThreadSafety(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go func(id int) {
 			cfg := &Config{
-				ServiceName: "test-service",
-				Port:        8000 + id,
+				ServiceName:        "test-service",
+				BusinessHTTPPort:   8000 + id,
+				BusinessGRPCPort:   9090,
+				HealthCheckPort:    8081,
+				MetricsPort:        9091,
+				EnableBusinessHTTP: true,
+				EnableBusinessGRPC: true,
+				EnableHealthCheck:  true,
+				EnableMetrics:      true,
 			}
 			Set(cfg)
 			done <- true
@@ -143,7 +164,9 @@ func TestConfig_DefaultValues(t *testing.T) {
 	// Verify zero values before defaults are applied
 	assert.Equal(t, "", cfg.ServiceName)
 	assert.Equal(t, "", cfg.Environment)
-	assert.Equal(t, 0, cfg.Port)
+	assert.Equal(t, 0, cfg.BusinessHTTPPort)
+	assert.Equal(t, 0, cfg.BusinessGRPCPort)
+	assert.Equal(t, 0, cfg.HealthCheckPort)
 	assert.Equal(t, 0, cfg.MetricsPort)
 }
 
@@ -161,7 +184,9 @@ func TestConfig_StructTags(t *testing.T) {
 	// Verify fields exist and are of correct types
 	assert.IsType(t, "", cfg.ServiceName)
 	assert.IsType(t, "", cfg.Environment)
-	assert.IsType(t, 0, cfg.Port)
+	assert.IsType(t, 0, cfg.BusinessHTTPPort)
+	assert.IsType(t, 0, cfg.BusinessGRPCPort)
+	assert.IsType(t, 0, cfg.HealthCheckPort)
 	assert.IsType(t, 0, cfg.MetricsPort)
 	assert.IsType(t, "", cfg.LogLevel)
 	assert.IsType(t, "", cfg.LogFormat)

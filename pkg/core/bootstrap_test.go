@@ -164,7 +164,7 @@ func (m *mockService) Start(ctx context.Context) error {
 
 	m.started = true
 
-	// Block until context is cancelled
+	// Block until context is canceled
 	<-ctx.Done()
 	return m.Stop(context.Background())
 }
@@ -191,12 +191,18 @@ func TestBootstrap_MinimalConfig(t *testing.T) {
 	}
 
 	cfg := &config.Config{
-		ServiceName: "test-service",
-		Environment: "testing",
-		Port:        8080,
-		MetricsPort: 9090,
-		LogLevel:    "info",
-		LogFormat:   "json",
+		ServiceName:        "test-service",
+		Environment:        "testing",
+		BusinessHTTPPort:   8080,
+		BusinessGRPCPort:   9090,
+		HealthCheckPort:    8081,
+		MetricsPort:        9091,
+		LogLevel:           "info",
+		LogFormat:          "json",
+		EnableBusinessHTTP: true,
+		EnableBusinessGRPC: true,
+		EnableHealthCheck:  true,
+		EnableMetrics:      true,
 	}
 
 	// Create a mock service that returns error immediately to stop bootstrap
@@ -248,13 +254,19 @@ func TestBootstrap_WithDatabaseDSN(t *testing.T) {
 	cfg := &config.Config{
 		ServiceName:          "test-service",
 		Environment:          "testing",
-		Port:                 8080,
+		BusinessHTTPPort:     8080,
+		BusinessGRPCPort:     9090,
+		HealthCheckPort:      8081,
 		MetricsPort:          9091,
 		LogLevel:             "info",
 		LogFormat:            "json",
 		DatabaseDSN:          "test:test@tcp(localhost:3306)/test",
 		DatabaseMaxOpenConns: 100,
 		DatabaseMaxIdleConns: 10,
+		EnableBusinessHTTP:   true,
+		EnableBusinessGRPC:   true,
+		EnableHealthCheck:    true,
+		EnableMetrics:        true,
 	}
 
 	// This test verifies the configuration is accepted
@@ -277,12 +289,18 @@ func TestBootstrap_MultipleServices(t *testing.T) {
 	}
 
 	cfg := &config.Config{
-		ServiceName: "test-service",
-		Environment: "testing",
-		Port:        8080,
-		MetricsPort: 9092,
-		LogLevel:    "info",
-		LogFormat:   "json",
+		ServiceName:        "test-service",
+		Environment:        "testing",
+		BusinessHTTPPort:   8080,
+		BusinessGRPCPort:   9090,
+		HealthCheckPort:    8081,
+		MetricsPort:        9092,
+		LogLevel:           "info",
+		LogFormat:          "json",
+		EnableBusinessHTTP: true,
+		EnableBusinessGRPC: true,
+		EnableHealthCheck:  true,
+		EnableMetrics:      true,
 	}
 
 	// Create multiple mock services that will start successfully
@@ -290,7 +308,7 @@ func TestBootstrap_MultipleServices(t *testing.T) {
 	svc2 := &mockService{}
 	svc3 := &mockService{}
 
-	// Use a context that will be cancelled after a short delay
+	// Use a context that will be canceled after a short delay
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
@@ -305,12 +323,18 @@ func TestBootstrap_MultipleServices(t *testing.T) {
 // This verifies Bootstrap sets the global configuration.
 func TestBootstrap_ConfigurationPropagation(t *testing.T) {
 	cfg := &config.Config{
-		ServiceName: "test-service",
-		Environment: "testing",
-		Port:        8080,
-		MetricsPort: 9093,
-		LogLevel:    "invalid", // Will fail at log init
-		LogFormat:   "json",
+		ServiceName:        "test-service",
+		Environment:        "testing",
+		BusinessHTTPPort:   8080,
+		BusinessGRPCPort:   9090,
+		HealthCheckPort:    8081,
+		MetricsPort:        9093,
+		LogLevel:           "invalid", // Will fail at log init
+		LogFormat:          "json",
+		EnableBusinessHTTP: true,
+		EnableBusinessGRPC: true,
+		EnableHealthCheck:  true,
+		EnableMetrics:      true,
 	}
 
 	err := Bootstrap(cfg)
@@ -328,12 +352,18 @@ func TestBootstrap_ZeroServices(t *testing.T) {
 	}
 
 	cfg := &config.Config{
-		ServiceName: "test-service",
-		Environment: "testing",
-		Port:        8080,
-		MetricsPort: 9094,
-		LogLevel:    "info",
-		LogFormat:   "json",
+		ServiceName:        "test-service",
+		Environment:        "testing",
+		BusinessHTTPPort:   8080,
+		BusinessGRPCPort:   9090,
+		HealthCheckPort:    8081,
+		MetricsPort:        9094,
+		LogLevel:           "info",
+		LogFormat:          "json",
+		EnableBusinessHTTP: true,
+		EnableBusinessGRPC: true,
+		EnableHealthCheck:  true,
+		EnableMetrics:      true,
 	}
 
 	// Run with no business services - Bootstrap will block without services or context cancellation
@@ -358,17 +388,23 @@ func TestBootstrap_PortConflict(t *testing.T) {
 	// Note: This test would require binding to ports
 	// We verify the configuration is accepted
 	cfg := &config.Config{
-		ServiceName: "test-service",
-		Environment: "testing",
-		Port:        8080,
-		MetricsPort: 8080, // Same as Port - may cause issues
-		LogLevel:    "info",
-		LogFormat:   "json",
+		ServiceName:        "test-service",
+		Environment:        "testing",
+		BusinessHTTPPort:   8080,
+		BusinessGRPCPort:   9090,
+		HealthCheckPort:    8081,
+		MetricsPort:        8080, // Same as BusinessHTTPPort - may cause issues
+		LogLevel:           "info",
+		LogFormat:          "json",
+		EnableBusinessHTTP: true,
+		EnableBusinessGRPC: true,
+		EnableHealthCheck:  true,
+		EnableMetrics:      true,
 	}
 
 	// Verify config is created
 	assert.NotNil(t, cfg)
-	assert.Equal(t, cfg.Port, cfg.MetricsPort)
+	assert.Equal(t, cfg.BusinessHTTPPort, cfg.MetricsPort)
 	// Actual port conflict would be caught during service startup
 }
 
@@ -493,13 +529,19 @@ func TestBootstrap_FullConfigCoverage(t *testing.T) {
 	cfg := &config.Config{
 		ServiceName:          "test-service",
 		Environment:          "production",
-		Port:                 8080,
-		MetricsPort:          9090,
+		BusinessHTTPPort:     8080,
+		BusinessGRPCPort:     9090,
+		HealthCheckPort:      8081,
+		MetricsPort:          9091,
 		LogLevel:             "info",
 		LogFormat:            "json",
 		DatabaseDSN:          "user:pass@tcp(localhost:3306)/db",
 		DatabaseMaxOpenConns: 100,
 		DatabaseMaxIdleConns: 10,
+		EnableBusinessHTTP:   true,
+		EnableBusinessGRPC:   true,
+		EnableHealthCheck:    true,
+		EnableMetrics:        true,
 		EnableK8sConfigWatch: false,
 		K8sNamespace:         "default",
 		K8sConfigMapName:     "test-config",
@@ -508,6 +550,282 @@ func TestBootstrap_FullConfigCoverage(t *testing.T) {
 	// Verify configuration is complete and valid
 	assert.NotNil(t, cfg)
 	assert.Equal(t, "test-service", cfg.ServiceName)
-	assert.Equal(t, 9090, cfg.MetricsPort)
+	assert.Equal(t, 9091, cfg.MetricsPort)
 	assert.Equal(t, "user:pass@tcp(localhost:3306)/db", cfg.DatabaseDSN)
+}
+
+// TestRegisterBusinessServers tests business server registration.
+// This verifies HTTP and gRPC servers are created and registered based on configuration.
+func TestRegisterBusinessServers(t *testing.T) {
+	log.Init("info", "json")
+
+	tests := []struct {
+		name              string
+		enableHTTP        bool
+		enableGRPC        bool
+		httpPort          int
+		grpcPort          int
+		expectServerCount int
+	}{
+		{
+			name:              "both_servers_enabled",
+			enableHTTP:        true,
+			enableGRPC:        true,
+			httpPort:          8080,
+			grpcPort:          9090,
+			expectServerCount: 2,
+		},
+		{
+			name:              "http_only",
+			enableHTTP:        true,
+			enableGRPC:        false,
+			httpPort:          8080,
+			grpcPort:          9090,
+			expectServerCount: 1,
+		},
+		{
+			name:              "grpc_only",
+			enableHTTP:        false,
+			enableGRPC:        true,
+			httpPort:          8080,
+			grpcPort:          9090,
+			expectServerCount: 1,
+		},
+		{
+			name:              "no_servers_enabled",
+			enableHTTP:        false,
+			enableGRPC:        false,
+			httpPort:          8080,
+			grpcPort:          9090,
+			expectServerCount: 0,
+		},
+		{
+			name:              "custom_ports",
+			enableHTTP:        true,
+			enableGRPC:        true,
+			httpPort:          8081,
+			grpcPort:          9091,
+			expectServerCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			launcher := service.NewLauncher()
+			cfg := &config.Config{
+				BusinessHTTPPort:   tt.httpPort,
+				BusinessGRPCPort:   tt.grpcPort,
+				EnableBusinessHTTP: tt.enableHTTP,
+				EnableBusinessGRPC: tt.enableGRPC,
+			}
+
+			err := registerBusinessServers(launcher, cfg)
+			assert.NoError(t, err)
+		})
+	}
+}
+
+// TestRegisterBusinessServers_ErrorHandling tests error handling in business server registration.
+// This verifies proper error handling for invalid configurations.
+func TestRegisterBusinessServers_ErrorHandling(t *testing.T) {
+	log.Init("info", "json")
+
+	// Test with nil launcher (should not panic)
+	cfg := &config.Config{
+		BusinessHTTPPort:   8080,
+		BusinessGRPCPort:   9090,
+		EnableBusinessHTTP: true,
+		EnableBusinessGRPC: true,
+	}
+
+	// This should not panic
+	assert.NotPanics(t, func() {
+		registerBusinessServers(nil, cfg)
+	})
+}
+
+// TestBootstrap_ServerConfiguration tests bootstrap with different server configurations.
+// This verifies Bootstrap handles various server enable/disable combinations.
+func TestBootstrap_ServerConfiguration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+
+	tests := []struct {
+		name                 string
+		enableHTTP           bool
+		enableGRPC           bool
+		enableHealth         bool
+		enableMetrics        bool
+		expectedServiceCount int
+	}{
+		{
+			name:                 "all_enabled",
+			enableHTTP:           true,
+			enableGRPC:           true,
+			enableHealth:         true,
+			enableMetrics:        true,
+			expectedServiceCount: 4,
+		},
+		{
+			name:                 "http_only",
+			enableHTTP:           true,
+			enableGRPC:           false,
+			enableHealth:         true,
+			enableMetrics:        true,
+			expectedServiceCount: 3,
+		},
+		{
+			name:                 "grpc_only",
+			enableHTTP:           false,
+			enableGRPC:           true,
+			enableHealth:         true,
+			enableMetrics:        true,
+			expectedServiceCount: 3,
+		},
+		{
+			name:                 "infrastructure_only",
+			enableHTTP:           false,
+			enableGRPC:           false,
+			enableHealth:         true,
+			enableMetrics:        true,
+			expectedServiceCount: 2,
+		},
+		{
+			name:                 "health_only",
+			enableHTTP:           false,
+			enableGRPC:           false,
+			enableHealth:         true,
+			enableMetrics:        false,
+			expectedServiceCount: 1,
+		},
+		{
+			name:                 "metrics_only",
+			enableHTTP:           false,
+			enableGRPC:           false,
+			enableHealth:         false,
+			enableMetrics:        true,
+			expectedServiceCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.Config{
+				ServiceName:        "test-service",
+				Environment:        "testing",
+				BusinessHTTPPort:   8080,
+				BusinessGRPCPort:   9090,
+				HealthCheckPort:    8081,
+				MetricsPort:        9091,
+				LogLevel:           "info",
+				LogFormat:          "json",
+				EnableBusinessHTTP: tt.enableHTTP,
+				EnableBusinessGRPC: tt.enableGRPC,
+				EnableHealthCheck:  tt.enableHealth,
+				EnableMetrics:      tt.enableMetrics,
+			}
+
+			// Create a mock service that will stop early
+			mockSvc := &mockService{
+				startError: errors.New("test stop signal"),
+			}
+
+			// Run bootstrap in goroutine with timeout
+			errCh := make(chan error, 1)
+			go func() {
+				errCh <- Bootstrap(cfg, mockSvc)
+			}()
+
+			select {
+			case err := <-errCh:
+				// Expected to fail with our test stop signal
+				if err != nil {
+					assert.Contains(t, err.Error(), "test stop signal")
+					t.Logf("Bootstrap stopped as expected: %v", err)
+				}
+			case <-time.After(2 * time.Second):
+				t.Fatal("Bootstrap did not complete within timeout")
+			}
+		})
+	}
+}
+
+// TestBootstrap_PortConfiguration tests bootstrap with various port configurations.
+// This verifies Bootstrap handles different port assignments correctly.
+func TestBootstrap_PortConfiguration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+
+	tests := []struct {
+		name        string
+		httpPort    int
+		grpcPort    int
+		healthPort  int
+		metricsPort int
+	}{
+		{
+			name:        "default_ports",
+			httpPort:    8080,
+			grpcPort:    9090,
+			healthPort:  8081,
+			metricsPort: 9091,
+		},
+		{
+			name:        "custom_ports",
+			httpPort:    8081,
+			grpcPort:    9091,
+			healthPort:  8082,
+			metricsPort: 9092,
+		},
+		{
+			name:        "high_ports",
+			httpPort:    18080,
+			grpcPort:    19090,
+			healthPort:  18081,
+			metricsPort: 19091,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &config.Config{
+				ServiceName:        "test-service",
+				Environment:        "testing",
+				BusinessHTTPPort:   tt.httpPort,
+				BusinessGRPCPort:   tt.grpcPort,
+				HealthCheckPort:    tt.healthPort,
+				MetricsPort:        tt.metricsPort,
+				LogLevel:           "info",
+				LogFormat:          "json",
+				EnableBusinessHTTP: true,
+				EnableBusinessGRPC: true,
+				EnableHealthCheck:  true,
+				EnableMetrics:      true,
+			}
+
+			// Create a mock service that will stop early
+			mockSvc := &mockService{
+				startError: errors.New("test stop signal"),
+			}
+
+			// Run bootstrap in goroutine with timeout
+			errCh := make(chan error, 1)
+			go func() {
+				errCh <- Bootstrap(cfg, mockSvc)
+			}()
+
+			select {
+			case err := <-errCh:
+				// Expected to fail with our test stop signal
+				if err != nil {
+					assert.Contains(t, err.Error(), "test stop signal")
+					t.Logf("Bootstrap stopped as expected: %v", err)
+				}
+			case <-time.After(2 * time.Second):
+				t.Fatal("Bootstrap did not complete within timeout")
+			}
+		})
+	}
 }

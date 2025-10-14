@@ -335,7 +335,7 @@ func TestInitializeAllTables_ContextCancellation(t *testing.T) {
 	repo := &mockRepository{
 		tableName: "users",
 		initTableFunc: func(ctx context.Context, db *gorm.DB) error {
-			// Check if context is cancelled
+			// Check if context is canceled
 			select {
 			case <-ctx.Done():
 				return ctx.Err()

@@ -1,3 +1,6 @@
+// Package db provides database integration for EggyByte services.
+// It includes MySQL/TiDB support with connection pooling, transaction management,
+// and GORM integration with automatic table migration capabilities.
 package db
 
 import (

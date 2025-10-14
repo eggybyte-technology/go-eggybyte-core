@@ -1,3 +1,6 @@
+// Package config provides unified configuration management for EggyByte services.
+// It supports environment variable loading, Kubernetes ConfigMap watching,
+// and thread-safe global configuration access with type-safe structures.
 package config
 
 import (
@@ -29,12 +32,22 @@ type Config struct {
 	// Used for environment-specific configuration and feature flags.
 	Environment string `envconfig:"ENVIRONMENT" default:"development"`
 
-	// Port is the HTTP server listening port for business APIs.
-	Port int `envconfig:"PORT" default:"8080"`
+	// BusinessHTTPPort is the HTTP server listening port for business APIs.
+	// This port serves the main application endpoints and REST APIs.
+	BusinessHTTPPort int `envconfig:"BUSINESS_HTTP_PORT" default:"8080"`
 
-	// MetricsPort is the HTTP server port for Prometheus metrics and health checks.
-	// Separated from business port for security and monitoring isolation.
-	MetricsPort int `envconfig:"METRICS_PORT" default:"9090"`
+	// BusinessGRPCPort is the gRPC server listening port for business APIs.
+	// This port serves gRPC endpoints for inter-service communication.
+	// Set to 0 to disable gRPC server.
+	BusinessGRPCPort int `envconfig:"BUSINESS_GRPC_PORT" default:"9090"`
+
+	// HealthCheckPort is the HTTP server port for health checks and readiness probes.
+	// This port serves Kubernetes health check endpoints (/healthz, /livez, /readyz).
+	HealthCheckPort int `envconfig:"HEALTH_CHECK_PORT" default:"8081"`
+
+	// MetricsPort is the HTTP server port for Prometheus metrics exposition.
+	// This port serves the /metrics endpoint for monitoring and alerting.
+	MetricsPort int `envconfig:"METRICS_PORT" default:"9091"`
 
 	// LogLevel controls the verbosity of logging output.
 	// Valid values: debug, info, warn, error, fatal
@@ -54,6 +67,22 @@ type Config struct {
 
 	// DatabaseMaxIdleConns sets the maximum number of idle database connections.
 	DatabaseMaxIdleConns int `envconfig:"DATABASE_MAX_IDLE_CONNS" default:"10"`
+
+	// EnableBusinessHTTP enables the business HTTP server.
+	// When disabled, only health check and metrics endpoints are available.
+	EnableBusinessHTTP bool `envconfig:"ENABLE_BUSINESS_HTTP" default:"true"`
+
+	// EnableBusinessGRPC enables the business gRPC server.
+	// When disabled, only HTTP endpoints are available.
+	EnableBusinessGRPC bool `envconfig:"ENABLE_BUSINESS_GRPC" default:"true"`
+
+	// EnableHealthCheck enables the health check server.
+	// This server provides Kubernetes-compatible health check endpoints.
+	EnableHealthCheck bool `envconfig:"ENABLE_HEALTH_CHECK" default:"true"`
+
+	// EnableMetrics enables the metrics exposition server.
+	// This server provides Prometheus-compatible metrics endpoints.
+	EnableMetrics bool `envconfig:"ENABLE_METRICS" default:"true"`
 
 	// EnableK8sConfigWatch enables Kubernetes ConfigMap watching for dynamic config updates.
 	// Requires proper RBAC permissions to watch ConfigMaps in the specified namespace.

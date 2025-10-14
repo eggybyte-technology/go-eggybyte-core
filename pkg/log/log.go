@@ -1,3 +1,6 @@
+// Package log provides structured logging for EggyByte services.
+// It includes context-aware logging with automatic request ID tracking,
+// multiple output formats (JSON, console, colorful), and configurable levels.
 package log
 
 import (

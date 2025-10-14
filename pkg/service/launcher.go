@@ -1,4 +1,4 @@
-package service
+// Package service provides service lifecycle management for EggyByte services.
 
 import (
 	"context"

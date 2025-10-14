@@ -4,6 +4,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.25.1+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-v0.0.1-blue.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/releases/tag/v0.0.1)
 [![Go Reference](https://pkg.go.dev/badge/github.com/eggybyte-technology/go-eggybyte-core.svg)](https://pkg.go.dev/github.com/eggybyte-technology/go-eggybyte-core)
 [![Test Coverage](https://img.shields.io/badge/Coverage-67.9%25-green.svg)](coverage.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/eggybyte-technology/go-eggybyte-core)](https://goreportcard.com/report/github.com/eggybyte-technology/go-eggybyte-core)
@@ -30,6 +31,7 @@
 - **Developer Experience First**: Intuitive APIs and comprehensive tooling
 - **Production Ready**: Built-in observability, health checks, and graceful shutdown
 - **Cloud Native**: Kubernetes-ready with modern deployment patterns
+- **Modern Go Standards**: Follows Go community best practices and conventions
 
 ---
 
@@ -89,12 +91,12 @@ func main() {
 - ✅ Structured logging
 - ✅ Request ID tracking
 - ✅ Graceful shutdown
-- ✅ Health checks (/healthz)
-- ✅ Liveness probe (/livez)
-- ✅ Readiness probe (/readyz)
-- ✅ Prometheus metrics (/metrics)
+- ✅ Health checks (port 8081: /healthz, /livez, /readyz)
+- ✅ Prometheus metrics (port 9091: /metrics)
 - ✅ Database pooling
 - ✅ Auto table migration
+- ✅ Business HTTP server (port 8080, if enabled)
+- ✅ Business gRPC server (port 9090, if enabled)
 
 ---
 
@@ -109,9 +111,8 @@ go-eggybyte-core/
 ├── 📝 pkg/log/          Structured logging with context propagation
 ├── 🗄️  pkg/db/          Database with auto-registration & pooling
 ├── 🚀 pkg/service/      Service launcher & graceful shutdown
-├── 📊 pkg/monitoring/   Unified metrics & health endpoints
-├── 📊 pkg/metrics/      Prometheus metrics collection
-├── 🏥 pkg/health/       Health check service implementation
+├── 🌐 pkg/server/       HTTP & gRPC business servers
+├── 📊 pkg/monitoring/   Unified health checks & Prometheus metrics
 └── 📚 docs/             Comprehensive documentation
 ```
 
@@ -199,13 +200,23 @@ All configuration is managed through environment variables—no config files nee
 SERVICE_NAME=user-service
 ENVIRONMENT=production
 
-# Network
-PORT=8080
-METRICS_PORT=9090
+# Business Server Ports
+BUSINESS_HTTP_PORT=8080        # HTTP API server port
+BUSINESS_GRPC_PORT=9090        # gRPC API server port
+
+# Infrastructure Service Ports
+HEALTH_CHECK_PORT=8081         # Health check endpoints port
+METRICS_PORT=9091              # Prometheus metrics port
+
+# Service Enable Flags
+ENABLE_BUSINESS_HTTP=true      # Enable HTTP server
+ENABLE_BUSINESS_GRPC=true      # Enable gRPC server
+ENABLE_HEALTH_CHECK=true       # Enable health check service
+ENABLE_METRICS=true            # Enable metrics service
 
 # Logging
-LOG_LEVEL=info          # debug | info | warn | error | fatal
-LOG_FORMAT=json         # json | console
+LOG_LEVEL=info                 # debug | info | warn | error | fatal
+LOG_FORMAT=json                # json | console
 
 # Database (Optional)
 DATABASE_DSN=user:pass@tcp(localhost:3306)/mydb?charset=utf8mb4&parseTime=True
@@ -222,16 +233,23 @@ K8S_CONFIGMAP_NAME=my-service-config
 
 ## 📊 Built-in Monitoring
 
-### Unified Monitoring Server
+### Separate Health Check and Metrics Services
 
-All monitoring endpoints served on **port 9090** for Kubernetes compatibility:
+Health check and metrics services run on separate ports for better security and monitoring isolation:
+
+#### Health Check Service (Port 8081)
+
+| Endpoint | Purpose | Response |
+|----------|---------|----------|
+| `GET /healthz` | Combined health check | JSON status |
+| `GET /livez` | Liveness probe | HTTP 200 |
+| `GET /readyz` | Readiness probe | HTTP 200/503 |
+
+#### Metrics Service (Port 9091)
 
 | Endpoint | Purpose | Response |
 |----------|---------|----------|
 | `GET /metrics` | Prometheus metrics | Text format |
-| `GET /healthz` | Combined health check | JSON status |
-| `GET /livez` | Liveness probe | HTTP 200 |
-| `GET /readyz` | Readiness probe | HTTP 200/503 |
 
 ### Health Check Response
 
@@ -290,15 +308,48 @@ log.ErrorContext(ctx, "Request failed", log.Field{Key: "error", Value: err})
 
 ## 🎯 Service Implementation
 
-### Implement Service Interface
+### Using Built-in Server Modules
+
+EggyByte Core provides ready-to-use HTTP and gRPC server implementations:
 
 ```go
-type HTTPServer struct {
+import (
+    "github.com/eggybyte-technology/go-eggybyte-core/pkg/server"
+    "github.com/eggybyte-technology/go-eggybyte-core/pkg/config"
+    "github.com/eggybyte-technology/go-eggybyte-core/pkg/core"
+)
+
+func main() {
+    cfg := &config.Config{}
+    config.MustReadFromEnv(cfg)
+
+    // Create HTTP server for REST APIs
+    httpServer := server.NewHTTPServer(":8080")
+    httpServer.HandleFunc("/api/v1/users", userHandler)
+    httpServer.HandleFunc("/api/v1/orders", orderHandler)
+
+    // Create gRPC server for RPC APIs
+    grpcServer := server.NewGRPCServer(":9090")
+    grpcServer.EnableReflection() // Enable for development
+    pb.RegisterUserServiceServer(grpcServer.GetServer(), userService)
+    pb.RegisterOrderServiceServer(grpcServer.GetServer(), orderService)
+
+    // Bootstrap with business servers
+    core.Bootstrap(cfg, httpServer, grpcServer)
+}
+```
+
+### Custom Service Implementation
+
+For custom services, implement the Service interface:
+
+```go
+type CustomService struct {
     port   int
     server *http.Server
 }
 
-func (s *HTTPServer) Start(ctx context.Context) error {
+func (s *CustomService) Start(ctx context.Context) error {
     s.server = &http.Server{Addr: fmt.Sprintf(":%d", s.port)}
 
     errCh := make(chan error, 1)
@@ -314,22 +365,17 @@ func (s *HTTPServer) Start(ctx context.Context) error {
     }
 }
 
-func (s *HTTPServer) Stop(ctx context.Context) error {
+func (s *CustomService) Stop(ctx context.Context) error {
     return s.server.Shutdown(ctx)
 }
-```
 
-### Register with Bootstrap
-
-```go
+// Register with Bootstrap
 func main() {
     cfg := &config.Config{}
     config.MustReadFromEnv(cfg)
 
-    httpServer := NewHTTPServer(cfg.Port)
-    grpcServer := NewGRPCServer(9090)
-
-    core.Bootstrap(cfg, httpServer, grpcServer)
+    customService := &CustomService{port: 8080}
+    core.Bootstrap(cfg, customService)
 }
 ```
 
@@ -409,6 +455,75 @@ launcher.AddInitializer(&CacheInitializer{redisAddr: "localhost:6379"})
 - **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - Design patterns and best practices
 - **[Migration Guide](docs/MIGRATION.md)** - Upgrading from other frameworks
+
+---
+
+## 🛠️ Development
+
+### Prerequisites
+
+- Go 1.25.1 or later
+- Make (for build automation)
+- golangci-lint (for code quality)
+
+### Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/eggybyte-technology/go-eggybyte-core.git
+cd go-eggybyte-core
+
+# Install dependencies
+make deps
+
+# Run tests
+make test
+
+# Run linting
+make lint
+
+# Run all checks
+make check
+```
+
+### Project Structure
+
+```
+go-eggybyte-core/
+├── pkg/                    # Public library packages
+│   ├── core/              # Bootstrap orchestrator
+│   ├── config/            # Configuration management
+│   ├── log/               # Structured logging
+│   ├── db/                # Database utilities
+│   ├── monitoring/        # Health checks & metrics
+│   ├── server/            # HTTP & gRPC servers
+│   └── service/           # Service lifecycle
+├── docs/                  # Documentation
+├── internal/              # Internal packages (not exported)
+├── .golangci.yml          # Linting configuration
+├── .gitignore             # Git ignore rules
+├── Makefile               # Build automation
+└── README.md              # This file
+```
+
+### Code Quality
+
+The project follows strict code quality standards:
+
+- **100% English Comments**: All public APIs must have English documentation
+- **Method Length Limit**: Public methods ≤50 lines
+- **Test Coverage**: ≥90% coverage for core functionality
+- **Linting**: golangci-lint with comprehensive rules
+- **Formatting**: gofmt and goimports enforcement
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes following the coding standards
+4. Add tests for new functionality
+5. Run `make check` to ensure quality
+6. Submit a pull request
 
 ---
 

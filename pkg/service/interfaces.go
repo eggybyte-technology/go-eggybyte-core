@@ -1,3 +1,6 @@
+// Package service provides service lifecycle management for EggyByte services.
+// It includes interfaces for services and initializers, with support for
+// graceful startup, shutdown, and coordinated resource management.
 package service
 
 import "context"
@@ -9,7 +12,7 @@ import "context"
 // Lifecycle:
 //  1. Service is created and registered with Launcher
 //  2. Launcher calls Start() to begin operation
-//  3. Start() should block until service stops or context is cancelled
+//  3. Start() should block until service stops or context is canceled
 //  4. Launcher calls Stop() during graceful shutdown
 //
 // Implementations must be safe for concurrent Start/Stop calls.
@@ -25,8 +28,8 @@ type Service interface {
 	//     a fatal runtime error. Returns nil on normal shutdown.
 	//
 	// Behavior:
-	//   - Must block until service is stopped or context is cancelled
-	//   - Should return promptly when context is cancelled
+	//   - Must block until service is stopped or context is canceled
+	//   - Should return promptly when context is canceled
 	//   - Clean up resources before returning
 	//
 	// Example implementation:

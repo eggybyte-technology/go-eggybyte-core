@@ -14,8 +14,10 @@ func TestReadFromEnv_WithValidEnv(t *testing.T) {
 	// Setup environment variables
 	os.Setenv("SERVICE_NAME", "test-service")
 	os.Setenv("ENVIRONMENT", "testing")
-	os.Setenv("PORT", "8080")
-	os.Setenv("METRICS_PORT", "9090")
+	os.Setenv("BUSINESS_HTTP_PORT", "8080")
+	os.Setenv("BUSINESS_GRPC_PORT", "9090")
+	os.Setenv("HEALTH_CHECK_PORT", "8081")
+	os.Setenv("METRICS_PORT", "9091")
 	defer cleanupEnv()
 
 	var cfg Config
@@ -24,8 +26,10 @@ func TestReadFromEnv_WithValidEnv(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "test-service", cfg.ServiceName)
 	assert.Equal(t, "testing", cfg.Environment)
-	assert.Equal(t, 8080, cfg.Port)
-	assert.Equal(t, 9090, cfg.MetricsPort)
+	assert.Equal(t, 8080, cfg.BusinessHTTPPort)
+	assert.Equal(t, 9090, cfg.BusinessGRPCPort)
+	assert.Equal(t, 8081, cfg.HealthCheckPort)
+	assert.Equal(t, 9091, cfg.MetricsPort)
 }
 
 // TestReadFromEnv_MissingRequired tests error handling for missing required fields.
@@ -53,8 +57,10 @@ func TestReadFromEnv_WithDefaults(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "development", cfg.Environment, "Expected default environment")
-	assert.Equal(t, 8080, cfg.Port, "Expected default port")
-	assert.Equal(t, 9090, cfg.MetricsPort, "Expected default metrics port")
+	assert.Equal(t, 8080, cfg.BusinessHTTPPort, "Expected default business HTTP port")
+	assert.Equal(t, 9090, cfg.BusinessGRPCPort, "Expected default business gRPC port")
+	assert.Equal(t, 8081, cfg.HealthCheckPort, "Expected default health check port")
+	assert.Equal(t, 9091, cfg.MetricsPort, "Expected default metrics port")
 	assert.Equal(t, "info", cfg.LogLevel, "Expected default log level")
 	assert.Equal(t, "json", cfg.LogFormat, "Expected default log format")
 }
@@ -63,7 +69,7 @@ func TestReadFromEnv_WithDefaults(t *testing.T) {
 // This verifies that envconfig correctly converts string env vars to typed fields.
 func TestReadFromEnv_TypeConversion(t *testing.T) {
 	os.Setenv("SERVICE_NAME", "test-service")
-	os.Setenv("PORT", "8888")
+	os.Setenv("BUSINESS_HTTP_PORT", "8888")
 	os.Setenv("DATABASE_MAX_OPEN_CONNS", "200")
 	os.Setenv("ENABLE_K8S_CONFIG_WATCH", "true")
 	defer cleanupEnv()
@@ -72,7 +78,7 @@ func TestReadFromEnv_TypeConversion(t *testing.T) {
 	err := ReadFromEnv(&cfg)
 
 	require.NoError(t, err)
-	assert.Equal(t, 8888, cfg.Port)
+	assert.Equal(t, 8888, cfg.BusinessHTTPPort)
 	assert.Equal(t, 200, cfg.DatabaseMaxOpenConns)
 	assert.True(t, cfg.EnableK8sConfigWatch)
 }
@@ -108,10 +114,12 @@ func TestMustReadFromEnv_Panic(t *testing.T) {
 // This is an isolated method test with no external dependencies.
 func TestValidateConfig_ValidConfig(t *testing.T) {
 	cfg := &Config{
-		ServiceName: "test-service",
-		Port:        8080,
-		MetricsPort: 9090,
-		LogLevel:    "info",
+		ServiceName:      "test-service",
+		BusinessHTTPPort: 8080,
+		BusinessGRPCPort: 9090,
+		HealthCheckPort:  8081,
+		MetricsPort:      9091,
+		LogLevel:         "info",
 	}
 
 	err := ValidateConfig(cfg)
@@ -123,9 +131,11 @@ func TestValidateConfig_ValidConfig(t *testing.T) {
 // This verifies the required field validation logic.
 func TestValidateConfig_EmptyServiceName(t *testing.T) {
 	cfg := &Config{
-		ServiceName: "",
-		Port:        8080,
-		MetricsPort: 9090,
+		ServiceName:      "",
+		BusinessHTTPPort: 8080,
+		BusinessGRPCPort: 9090,
+		HealthCheckPort:  8081,
+		MetricsPort:      9091,
 	}
 
 	err := ValidateConfig(cfg)
@@ -150,10 +160,12 @@ func TestValidateConfig_InvalidPort(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &Config{
-				ServiceName: "test-service",
-				Port:        tt.port,
-				MetricsPort: 9090,
-				LogLevel:    "info",
+				ServiceName:      "test-service",
+				BusinessHTTPPort: tt.port,
+				BusinessGRPCPort: 9090,
+				HealthCheckPort:  8081,
+				MetricsPort:      9091,
+				LogLevel:         "info",
 			}
 
 			err := ValidateConfig(cfg)
@@ -168,10 +180,12 @@ func TestValidateConfig_InvalidPort(t *testing.T) {
 // This verifies metrics port boundary checking.
 func TestValidateConfig_InvalidMetricsPort(t *testing.T) {
 	cfg := &Config{
-		ServiceName: "test-service",
-		Port:        8080,
-		MetricsPort: 0,
-		LogLevel:    "info",
+		ServiceName:      "test-service",
+		BusinessHTTPPort: 8080,
+		BusinessGRPCPort: 9090,
+		HealthCheckPort:  8081,
+		MetricsPort:      0,
+		LogLevel:         "info",
 	}
 
 	err := ValidateConfig(cfg)
@@ -184,26 +198,30 @@ func TestValidateConfig_InvalidMetricsPort(t *testing.T) {
 // This verifies the port conflict detection logic.
 func TestValidateConfig_SamePort(t *testing.T) {
 	cfg := &Config{
-		ServiceName: "test-service",
-		Port:        8080,
-		MetricsPort: 8080, // Same as business port
-		LogLevel:    "info",
+		ServiceName:      "test-service",
+		BusinessHTTPPort: 8080,
+		BusinessGRPCPort: 9090,
+		HealthCheckPort:  8081,
+		MetricsPort:      8080, // Same as business port
+		LogLevel:         "info",
 	}
 
 	err := ValidateConfig(cfg)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "business port and metrics port must be different")
+	assert.Contains(t, err.Error(), "ports must be unique")
 }
 
 // TestValidateConfig_InvalidLogLevel tests log level validation.
 // This verifies that only allowed log levels are accepted.
 func TestValidateConfig_InvalidLogLevel(t *testing.T) {
 	cfg := &Config{
-		ServiceName: "test-service",
-		Port:        8080,
-		MetricsPort: 9090,
-		LogLevel:    "invalid",
+		ServiceName:      "test-service",
+		BusinessHTTPPort: 8080,
+		BusinessGRPCPort: 9090,
+		HealthCheckPort:  8081,
+		MetricsPort:      9091,
+		LogLevel:         "invalid",
 	}
 
 	err := ValidateConfig(cfg)
@@ -220,10 +238,12 @@ func TestValidateConfig_ValidLogLevels(t *testing.T) {
 	for _, level := range validLevels {
 		t.Run(level, func(t *testing.T) {
 			cfg := &Config{
-				ServiceName: "test-service",
-				Port:        8080,
-				MetricsPort: 9090,
-				LogLevel:    level,
+				ServiceName:      "test-service",
+				BusinessHTTPPort: 8080,
+				BusinessGRPCPort: 9090,
+				HealthCheckPort:  8081,
+				MetricsPort:      9091,
+				LogLevel:         level,
 			}
 
 			err := ValidateConfig(cfg)
@@ -238,8 +258,10 @@ func TestValidateConfig_ValidLogLevels(t *testing.T) {
 func TestValidateConfig_K8sWatch_MissingNamespace(t *testing.T) {
 	cfg := &Config{
 		ServiceName:          "test-service",
-		Port:                 8080,
-		MetricsPort:          9090,
+		BusinessHTTPPort:     8080,
+		BusinessGRPCPort:     9090,
+		HealthCheckPort:      8081,
+		MetricsPort:          9091,
 		LogLevel:             "info",
 		EnableK8sConfigWatch: true,
 		K8sNamespace:         "", // Missing
@@ -257,8 +279,10 @@ func TestValidateConfig_K8sWatch_MissingNamespace(t *testing.T) {
 func TestValidateConfig_K8sWatch_MissingConfigMapName(t *testing.T) {
 	cfg := &Config{
 		ServiceName:          "test-service",
-		Port:                 8080,
-		MetricsPort:          9090,
+		BusinessHTTPPort:     8080,
+		BusinessGRPCPort:     9090,
+		HealthCheckPort:      8081,
+		MetricsPort:          9091,
 		LogLevel:             "info",
 		EnableK8sConfigWatch: true,
 		K8sNamespace:         "default",
@@ -276,8 +300,10 @@ func TestValidateConfig_K8sWatch_MissingConfigMapName(t *testing.T) {
 func TestValidateConfig_K8sWatch_ValidConfig(t *testing.T) {
 	cfg := &Config{
 		ServiceName:          "test-service",
-		Port:                 8080,
-		MetricsPort:          9090,
+		BusinessHTTPPort:     8080,
+		BusinessGRPCPort:     9090,
+		HealthCheckPort:      8081,
+		MetricsPort:          9091,
 		LogLevel:             "info",
 		EnableK8sConfigWatch: true,
 		K8sNamespace:         "default",

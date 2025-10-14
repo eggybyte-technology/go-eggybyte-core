@@ -57,7 +57,7 @@ func (m *mockService) Start(ctx context.Context) error {
 	}
 
 	if m.blockStart {
-		// Block until either stopChan is closed or context is cancelled
+		// Block until either stopChan is closed or context is canceled
 		select {
 		case <-m.stopChan:
 			return nil
@@ -508,7 +508,7 @@ func TestRun_Complete(t *testing.T) {
 	select {
 	case err := <-done:
 		assert.NoError(t, err)
-		// When context is cancelled, service Start() exits immediately
+		// When context is canceled, service Start() exits immediately
 		// Stop() may or may not be called depending on launcher implementation
 		// The important part is that the service started and shutdown completed
 		assert.Equal(t, int32(1), atomic.LoadInt32(&svc.startCalled), "Service should have started")

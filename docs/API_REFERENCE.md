@@ -36,14 +36,37 @@ if err := core.Bootstrap(cfg, httpServer, grpcServer); err != nil {
 
 ```go
 type Config struct {
+    // Service Identity
     ServiceName string `envconfig:"SERVICE_NAME" required:"true"`
     Environment string `envconfig:"ENVIRONMENT" default:"development"`
-    Port        int    `envconfig:"PORT" default:"8080"`
-    MetricsPort int    `envconfig:"METRICS_PORT" default:"9090"`
-    LogLevel    string `envconfig:"LOG_LEVEL" default:"info"`
-    LogFormat   string `envconfig:"LOG_FORMAT" default:"json"`
-    DatabaseDSN string `envconfig:"DATABASE_DSN"`
-    // ... other fields
+    
+    // Business Server Ports
+    BusinessHTTPPort int `envconfig:"BUSINESS_HTTP_PORT" default:"8080"`
+    BusinessGRPCPort int `envconfig:"BUSINESS_GRPC_PORT" default:"9090"`
+    
+    // Infrastructure Service Ports
+    HealthCheckPort int `envconfig:"HEALTH_CHECK_PORT" default:"8081"`
+    MetricsPort     int `envconfig:"METRICS_PORT" default:"9091"`
+    
+    // Service Enable Flags
+    EnableBusinessHTTP bool `envconfig:"ENABLE_BUSINESS_HTTP" default:"true"`
+    EnableBusinessGRPC bool `envconfig:"ENABLE_BUSINESS_GRPC" default:"true"`
+    EnableHealthCheck bool `envconfig:"ENABLE_HEALTH_CHECK" default:"true"`
+    EnableMetrics      bool `envconfig:"ENABLE_METRICS" default:"true"`
+    
+    // Logging Configuration
+    LogLevel  string `envconfig:"LOG_LEVEL" default:"info"`
+    LogFormat string `envconfig:"LOG_FORMAT" default:"json"`
+    
+    // Database Configuration
+    DatabaseDSN        string `envconfig:"DATABASE_DSN"`
+    DatabaseMaxOpenConns int  `envconfig:"DATABASE_MAX_OPEN_CONNS" default:"100"`
+    DatabaseMaxIdleConns int  `envconfig:"DATABASE_MAX_IDLE_CONNS" default:"10"`
+    
+    // Kubernetes Configuration Watch
+    EnableK8sConfigWatch bool   `envconfig:"ENABLE_K8S_CONFIG_WATCH" default:"false"`
+    K8sNamespace         string `envconfig:"K8S_NAMESPACE" default:"default"`
+    K8sConfigMapName     string `envconfig:"K8S_CONFIGMAP_NAME"`
 }
 ```
 
@@ -582,39 +605,464 @@ func (l *Launcher) Run(ctx context.Context) error
 **Returns:**
 - `error` - Returns error if any service fails
 
-## Monitoring Module (`pkg/monitoring`)
+## Server Module (`pkg/server`)
 
-### MonitoringService
+### HTTPServer
 
 ```go
-type MonitoringService struct {
-    port int
-    // ... internal fields
+type HTTPServer struct {
+    server *http.Server
+    port   string
+    mux    *http.ServeMux
+    logger log.Logger
 }
 ```
 
-#### NewMonitoringService
+#### NewHTTPServer
 ```go
-func NewMonitoringService(port int) *MonitoringService
+func NewHTTPServer(port string) *HTTPServer
 ```
 
-**Description:** Creates a new monitoring service.
+**Description:** Creates a new business HTTP server instance.
+
+**Parameters:**
+- `port` - Port to listen on (e.g., ":8080")
+
+**Returns:**
+- `*HTTPServer` - HTTP server instance
+
+**Example:**
+```go
+server := NewHTTPServer(":8080")
+server.HandleFunc("/api/v1/users", userHandler)
+go server.Start(ctx)
+```
+
+#### HandleFunc
+```go
+func (s *HTTPServer) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+```
+
+**Description:** Registers a handler function for the given URL pattern.
+
+**Parameters:**
+- `pattern` - URL pattern to match
+- `handler` - Handler function to execute
+
+#### Handle
+```go
+func (s *HTTPServer) Handle(pattern string, handler http.Handler)
+```
+
+**Description:** Registers a handler for the given URL pattern.
+
+**Parameters:**
+- `pattern` - URL pattern to match
+- `handler` - Handler to execute
+
+#### Start
+```go
+func (s *HTTPServer) Start(ctx context.Context) error
+```
+
+**Description:** Starts the HTTP server and begins serving requests.
+
+**Parameters:**
+- `ctx` - Context for cancellation
+
+**Returns:**
+- `error` - Returns error if server fails to start
+
+#### Stop
+```go
+func (s *HTTPServer) Stop(ctx context.Context) error
+```
+
+**Description:** Gracefully stops the HTTP server.
+
+**Parameters:**
+- `ctx` - Context for timeout control
+
+**Returns:**
+- `error` - Returns error if shutdown fails
+
+#### GetServer
+```go
+func (s *HTTPServer) GetServer() *http.Server
+```
+
+**Description:** Returns the underlying HTTP server instance.
+
+**Returns:**
+- `*http.Server` - The HTTP server instance
+
+#### SetLogger
+```go
+func (s *HTTPServer) SetLogger(logger interface{})
+```
+
+**Description:** Sets the logger for this HTTP server.
+
+**Parameters:**
+- `logger` - Logger instance implementing log.Logger interface
+
+### GRPCServer
+
+```go
+type GRPCServer struct {
+    server           *grpc.Server
+    port             string
+    listener         net.Listener
+    logger           log.Logger
+    enableReflection bool
+}
+```
+
+#### NewGRPCServer
+```go
+func NewGRPCServer(port string) *GRPCServer
+```
+
+**Description:** Creates a new business gRPC server instance.
+
+**Parameters:**
+- `port` - Port to listen on (e.g., ":9090")
+
+**Returns:**
+- `*GRPCServer` - gRPC server instance
+
+**Example:**
+```go
+server := NewGRPCServer(":9090")
+pb.RegisterUserServiceServer(server.GetServer(), userService)
+go server.Start(ctx)
+```
+
+#### NewGRPCServerWithOptions
+```go
+func NewGRPCServerWithOptions(port string, options ...grpc.ServerOption) *GRPCServer
+```
+
+**Description:** Creates a new gRPC server with custom options.
 
 **Parameters:**
 - `port` - Port to listen on
+- `options` - gRPC server options
 
 **Returns:**
-- `*MonitoringService` - Monitoring service instance
+- `*GRPCServer` - gRPC server instance
 
-#### AddChecker
+#### Start
 ```go
-func (m *MonitoringService) AddChecker(checker HealthChecker)
+func (s *GRPCServer) Start(ctx context.Context) error
 ```
 
-**Description:** Adds a health checker to the monitoring service.
+**Description:** Starts the gRPC server and begins serving requests.
 
 **Parameters:**
-- `checker` - Health checker to add
+- `ctx` - Context for cancellation
+
+**Returns:**
+- `error` - Returns error if server fails to start
+
+#### Stop
+```go
+func (s *GRPCServer) Stop(ctx context.Context) error
+```
+
+**Description:** Gracefully stops the gRPC server.
+
+**Parameters:**
+- `ctx` - Context for timeout control
+
+**Returns:**
+- `error` - Returns error if shutdown fails
+
+#### GetServer
+```go
+func (s *GRPCServer) GetServer() *grpc.Server
+```
+
+**Description:** Returns the underlying gRPC server instance.
+
+**Returns:**
+- `*grpc.Server` - The gRPC server instance
+
+#### EnableReflection
+```go
+func (s *GRPCServer) EnableReflection()
+```
+
+**Description:** Enables gRPC reflection for debugging and development.
+
+#### DisableReflection
+```go
+func (s *GRPCServer) DisableReflection()
+```
+
+**Description:** Disables gRPC reflection.
+
+#### SetLogger
+```go
+func (s *GRPCServer) SetLogger(logger interface{})
+```
+
+**Description:** Sets the logger for this gRPC server.
+
+**Parameters:**
+- `logger` - Logger instance implementing log.Logger interface
+
+### ServerManager
+
+```go
+type ServerManager struct {
+    httpServer HTTPServerInterface
+    grpcServer GRPCServerInterface
+}
+```
+
+#### NewServerManager
+```go
+func NewServerManager(httpServer HTTPServerInterface, grpcServer GRPCServerInterface) *ServerManager
+```
+
+**Description:** Creates a new server manager to coordinate HTTP and gRPC servers.
+
+**Parameters:**
+- `httpServer` - HTTP server interface (can be nil)
+- `grpcServer` - gRPC server interface (can be nil)
+
+**Returns:**
+- `*ServerManager` - Server manager instance
+
+#### Start
+```go
+func (m *ServerManager) Start(ctx context.Context) error
+```
+
+**Description:** Starts both HTTP and gRPC servers concurrently.
+
+**Parameters:**
+- `ctx` - Context for cancellation
+
+**Returns:**
+- `error` - Returns error if any server fails to start
+
+#### Stop
+```go
+func (m *ServerManager) Stop(ctx context.Context) error
+```
+
+**Description:** Gracefully stops both HTTP and gRPC servers.
+
+**Parameters:**
+- `ctx` - Context for timeout control
+
+**Returns:**
+- `error` - Returns error if any server fails to stop
+
+#### GetHTTPServer
+```go
+func (m *ServerManager) GetHTTPServer() HTTPServerInterface
+```
+
+**Description:** Returns the HTTP server interface.
+
+**Returns:**
+- `HTTPServerInterface` - HTTP server interface
+
+#### GetGRPCServer
+```go
+func (m *ServerManager) GetGRPCServer() GRPCServerInterface
+```
+
+**Description:** Returns the gRPC server interface.
+
+**Returns:**
+- `GRPCServerInterface` - gRPC server interface
+
+## Monitoring Module (`pkg/monitoring`)
+
+### HealthService
+
+```go
+type HealthService struct {
+    port     int
+    server   *http.Server
+    logger   log.Logger
+    checkers []HealthChecker
+    mu       sync.RWMutex
+}
+```
+
+#### NewHealthService
+```go
+func NewHealthService(port int) *HealthService
+```
+
+**Description:** Creates a new health check service.
+
+**Parameters:**
+- `port` - Port to listen on for health check endpoints
+
+**Returns:**
+- `*HealthService` - Health service instance
+
+**Example:**
+```go
+healthService := NewHealthService(8081)
+healthService.AddHealthChecker(databaseChecker)
+launcher.AddService(healthService)
+```
+
+#### AddHealthChecker
+```go
+func (h *HealthService) AddHealthChecker(checker HealthChecker)
+```
+
+**Description:** Adds a health checker to the service.
+
+**Parameters:**
+- `checker` - Health checker implementing HealthChecker interface
+
+#### Start
+```go
+func (h *HealthService) Start(ctx context.Context) error
+```
+
+**Description:** Starts the health check service.
+
+**Parameters:**
+- `ctx` - Context for cancellation
+
+**Returns:**
+- `error` - Returns error if service fails to start
+
+#### Stop
+```go
+func (h *HealthService) Stop(ctx context.Context) error
+```
+
+**Description:** Gracefully stops the health check service.
+
+**Parameters:**
+- `ctx` - Context for timeout control
+
+**Returns:**
+- `error` - Returns error if shutdown fails
+
+#### SetLogger
+```go
+func (h *HealthService) SetLogger(logger interface{})
+```
+
+**Description:** Sets the logger for this health service.
+
+**Parameters:**
+- `logger` - Logger instance implementing log.Logger interface
+
+### MetricsService
+
+```go
+type MetricsService struct {
+    port     int
+    server   *http.Server
+    logger   log.Logger
+    registry *prometheus.Registry
+}
+```
+
+#### NewMetricsService
+```go
+func NewMetricsService(port int) *MetricsService
+```
+
+**Description:** Creates a new Prometheus metrics exposition service.
+
+**Parameters:**
+- `port` - Port to listen on for metrics endpoint
+
+**Returns:**
+- `*MetricsService` - Metrics service instance
+
+**Example:**
+```go
+metricsService := NewMetricsService(9091)
+launcher.AddService(metricsService)
+```
+
+#### NewMetricsServiceWithRegistry
+```go
+func NewMetricsServiceWithRegistry(port int, registry *prometheus.Registry) *MetricsService
+```
+
+**Description:** Creates a new metrics service with a custom Prometheus registry.
+
+**Parameters:**
+- `port` - Port to listen on
+- `registry` - Custom Prometheus registry
+
+**Returns:**
+- `*MetricsService` - Metrics service instance
+
+#### RegisterCollector
+```go
+func (m *MetricsService) RegisterCollector(collector prometheus.Collector) error
+```
+
+**Description:** Registers a Prometheus collector with the metrics service.
+
+**Parameters:**
+- `collector` - Prometheus collector to register
+
+**Returns:**
+- `error` - Returns error if registration fails
+
+#### Start
+```go
+func (m *MetricsService) Start(ctx context.Context) error
+```
+
+**Description:** Starts the metrics exposition service.
+
+**Parameters:**
+- `ctx` - Context for cancellation
+
+**Returns:**
+- `error` - Returns error if service fails to start
+
+#### Stop
+```go
+func (m *MetricsService) Stop(ctx context.Context) error
+```
+
+**Description:** Gracefully stops the metrics service.
+
+**Parameters:**
+- `ctx` - Context for timeout control
+
+**Returns:**
+- `error` - Returns error if shutdown fails
+
+#### GetRegistry
+```go
+func (m *MetricsService) GetRegistry() *prometheus.Registry
+```
+
+**Description:** Returns the Prometheus registry used by this service.
+
+**Returns:**
+- `*prometheus.Registry` - The Prometheus registry
+
+#### SetLogger
+```go
+func (m *MetricsService) SetLogger(logger interface{})
+```
+
+**Description:** Sets the logger for this metrics service.
+
+**Parameters:**
+- `logger` - Logger instance implementing log.Logger interface
 
 ### HealthChecker Interface
 
@@ -624,6 +1072,12 @@ type HealthChecker interface {
     Check(ctx context.Context) error
 }
 ```
+
+**Description:** Interface for implementing custom health checkers.
+
+**Methods:**
+- `Name()` - Returns the identifier for this health checker
+- `Check(ctx)` - Performs the health check and returns error if unhealthy
 
 ## Project Structure
 

@@ -1,41 +1,59 @@
+// Package core provides the main bootstrap functionality for EggyByte services.
+// It orchestrates the complete application lifecycle including configuration loading,
+// logging initialization, infrastructure setup, and service startup with graceful shutdown.
 package core
 
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/eggybyte-technology/go-eggybyte-core/pkg/config"
 	"github.com/eggybyte-technology/go-eggybyte-core/pkg/db"
 	"github.com/eggybyte-technology/go-eggybyte-core/pkg/log"
 	"github.com/eggybyte-technology/go-eggybyte-core/pkg/monitoring"
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/server"
 	"github.com/eggybyte-technology/go-eggybyte-core/pkg/service"
 )
 
-// Bootstrap is the single entry point for all EggyByte services.
+// BootstrapWithContext is the same as Bootstrap but accepts a context for cancellation.
 // It orchestrates the complete application lifecycle including:
-//   - Configuration loading
-//   - Logging initialization
-//   - Infrastructure setup (database, metrics, health)
-//   - Business service registration and startup
-//   - Graceful shutdown handling
+//   - Configuration loading and validation
+//   - Logging initialization with structured output
+//   - Infrastructure setup (database, cache, monitoring)
+//   - Business server creation (HTTP/gRPC based on configuration)
+//   - Health check and metrics service registration
+//   - Graceful shutdown handling with proper signal management
 //
 // This function simplifies service creation to a single call with
 // automatic handling of all boilerplate setup and teardown.
 //
 // Parameters:
 //   - cfg: Service configuration loaded from environment variables
-//   - businessServices: Application-specific services to run
+//   - businessServices: Application-specific services to run (optional)
 //
 // Returns:
 //   - error: Returns error if any initialization or startup step fails
 //
 // Behavior:
-//   - Initializes logging based on config
-//   - Creates service launcher
+//   - Initializes logging based on config (level, format)
+//   - Creates service launcher with proper lifecycle management
 //   - Conditionally registers database initializer if DSN provided
-//   - Registers metrics and health services
-//   - Registers provided business services
-//   - Runs launcher with signal handling
+//   - Creates and registers business HTTP/gRPC servers based on configuration
+//   - Registers health check and metrics services on separate ports
+//   - Registers any additional business services provided
+//   - Runs launcher with signal handling and graceful shutdown
+//
+// Environment Variables:
+//   - SERVICE_NAME: Required service identifier
+//   - BUSINESS_HTTP_PORT: HTTP server port (default: 8080)
+//   - BUSINESS_GRPC_PORT: gRPC server port (default: 9090)
+//   - HEALTH_CHECK_PORT: Health check port (default: 8081)
+//   - METRICS_PORT: Metrics exposition port (default: 9091)
+//   - ENABLE_BUSINESS_HTTP: Enable HTTP server (default: true)
+//   - ENABLE_BUSINESS_GRPC: Enable gRPC server (default: true)
+//   - ENABLE_HEALTH_CHECK: Enable health check server (default: true)
+//   - ENABLE_METRICS: Enable metrics server (default: true)
 //
 // Example:
 //
@@ -44,10 +62,18 @@ import (
 //	    log.Fatal("Failed to load config", log.Field{Key: "error", Value: err})
 //	}
 //
-//	httpServer := myapp.NewHTTPServer(cfg.Port)
-//	grpcServer := myapp.NewGRPCServer(9090)
+//	// Bootstrap will automatically create HTTP/gRPC servers based on config
+//	if err := core.Bootstrap(cfg); err != nil {
+//	    log.Fatal("Bootstrap failed", log.Field{Key: "error", Value: err})
+//	}
 //
-//	if err := core.Bootstrap(cfg, httpServer, grpcServer); err != nil {
+// Example with custom business services:
+//
+//	cfg := &config.Config{}
+//	config.MustReadFromEnv(cfg)
+//
+//	customService := myapp.NewCustomService()
+//	if err := core.Bootstrap(cfg, customService); err != nil {
 //	    log.Fatal("Bootstrap failed", log.Field{Key: "error", Value: err})
 //	}
 //
@@ -75,17 +101,22 @@ func BootstrapWithContext(ctx context.Context, cfg *config.Config, businessServi
 		return err
 	}
 
-	// Phase 5: Register infrastructure services
+	// Phase 5: Create and register business servers
+	if err := registerBusinessServers(launcher, cfg); err != nil {
+		return err
+	}
+
+	// Phase 6: Register infrastructure services
 	registerInfraServices(launcher, cfg)
 
-	// Phase 6: Register business services
+	// Phase 7: Register additional business services
 	for _, svc := range businessServices {
 		launcher.AddService(svc)
 	}
 
-	// Phase 7: Run launcher with complete lifecycle management
+	// Phase 8: Run launcher with complete lifecycle management
 	log.Info("Launching services",
-		log.Field{Key: "service_count", Value: len(businessServices) + 1}) // +1 for monitoring
+		log.Field{Key: "service_count", Value: len(businessServices) + 3}) // +3 for business servers and monitoring
 
 	if err := launcher.Run(ctx); err != nil {
 		return fmt.Errorf("service launcher failed: %w", err)
@@ -95,6 +126,66 @@ func BootstrapWithContext(ctx context.Context, cfg *config.Config, businessServi
 	return nil
 }
 
+// Bootstrap is the single entry point for all EggyByte services.
+// It orchestrates the complete application lifecycle including:
+//   - Configuration loading and validation
+//   - Logging initialization with structured output
+//   - Infrastructure setup (database, cache, monitoring)
+//   - Business server creation (HTTP/gRPC based on configuration)
+//   - Health check and metrics service registration
+//   - Graceful shutdown handling with proper signal management
+//
+// This function simplifies service creation to a single call with
+// automatic handling of all boilerplate setup and teardown.
+//
+// Parameters:
+//   - cfg: Service configuration loaded from environment variables
+//   - businessServices: Application-specific services to run (optional)
+//
+// Returns:
+//   - error: Returns error if any initialization or startup step fails
+//
+// Behavior:
+//   - Initializes logging based on config (level, format)
+//   - Creates service launcher with proper lifecycle management
+//   - Conditionally registers database initializer if DSN provided
+//   - Creates and registers business HTTP/gRPC servers based on configuration
+//   - Registers health check and metrics services on separate ports
+//   - Registers any additional business services provided
+//   - Runs launcher with signal handling and graceful shutdown
+//
+// Environment Variables:
+//   - SERVICE_NAME: Required service identifier
+//   - BUSINESS_HTTP_PORT: HTTP server port (default: 8080)
+//   - BUSINESS_GRPC_PORT: gRPC server port (default: 9090)
+//   - HEALTH_CHECK_PORT: Health check port (default: 8081)
+//   - METRICS_PORT: Metrics exposition port (default: 9091)
+//   - ENABLE_BUSINESS_HTTP: Enable HTTP server (default: true)
+//   - ENABLE_BUSINESS_GRPC: Enable gRPC server (default: true)
+//   - ENABLE_HEALTH_CHECK: Enable health check server (default: true)
+//   - ENABLE_METRICS: Enable metrics server (default: true)
+//
+// Example:
+//
+//	cfg := &config.Config{}
+//	if err := config.ReadFromEnv(cfg); err != nil {
+//	    log.Fatal("Failed to load config", log.Field{Key: "error", Value: err})
+//	}
+//
+//	// Bootstrap will automatically create HTTP/gRPC servers based on config
+//	if err := core.Bootstrap(cfg); err != nil {
+//	    log.Fatal("Bootstrap failed", log.Field{Key: "error", Value: err})
+//	}
+//
+// Example with custom business services:
+//
+//	cfg := &config.Config{}
+//	config.MustReadFromEnv(cfg)
+//
+//	customService := myapp.NewCustomService()
+//	if err := core.Bootstrap(cfg, customService); err != nil {
+//	    log.Fatal("Bootstrap failed", log.Field{Key: "error", Value: err})
+//	}
 func Bootstrap(cfg *config.Config, businessServices ...service.Service) error {
 	// Phase 1: Initialize logging system
 	if err := initializeLogging(cfg); err != nil {
@@ -117,17 +208,22 @@ func Bootstrap(cfg *config.Config, businessServices ...service.Service) error {
 		return err
 	}
 
-	// Phase 5: Register infrastructure services
+	// Phase 5: Create and register business servers
+	if err := registerBusinessServers(launcher, cfg); err != nil {
+		return err
+	}
+
+	// Phase 6: Register infrastructure services
 	registerInfraServices(launcher, cfg)
 
-	// Phase 6: Register business services
+	// Phase 7: Register additional business services
 	for _, svc := range businessServices {
 		launcher.AddService(svc)
 	}
 
-	// Phase 7: Run launcher with complete lifecycle management
+	// Phase 8: Run launcher with complete lifecycle management
 	log.Info("Launching services",
-		log.Field{Key: "service_count", Value: len(businessServices) + 1}) // +1 for monitoring
+		log.Field{Key: "service_count", Value: len(businessServices) + 3}) // +3 for business servers and monitoring
 
 	if err := launcher.Run(context.Background()); err != nil {
 		return fmt.Errorf("service launcher failed: %w", err)
@@ -171,13 +267,109 @@ func registerInitializers(launcher *service.Launcher, cfg *config.Config) error 
 	return nil
 }
 
+// registerBusinessServers creates and registers business HTTP/gRPC servers based on configuration.
+// This function creates servers only if they are enabled in the configuration.
+//
+// Parameters:
+//   - launcher: The service launcher to register servers with
+//   - cfg: Service configuration containing server settings
+//
+// Returns:
+//   - error: Returns error if server creation fails
+//
+// Behavior:
+//   - Creates HTTP server if ENABLE_BUSINESS_HTTP is true
+//   - Creates gRPC server if ENABLE_BUSINESS_GRPC is true
+//   - Registers servers with the launcher for lifecycle management
+//   - Logs server creation and configuration details
+func registerBusinessServers(launcher *service.Launcher, cfg *config.Config) error {
+	var serverCount int
+
+	// Create HTTP server if enabled
+	if cfg.EnableBusinessHTTP {
+		httpPort := ":" + strconv.Itoa(cfg.BusinessHTTPPort)
+		httpServer := server.NewHTTPServer(httpPort)
+		httpServer.SetLogger(log.Default())
+		if launcher != nil {
+			launcher.AddService(httpServer)
+		}
+		serverCount++
+
+		log.Info("Business HTTP server registered",
+			log.Field{Key: "port", Value: cfg.BusinessHTTPPort},
+			log.Field{Key: "address", Value: httpPort})
+	}
+
+	// Create gRPC server if enabled
+	if cfg.EnableBusinessGRPC {
+		grpcPort := ":" + strconv.Itoa(cfg.BusinessGRPCPort)
+		grpcServer := server.NewGRPCServer(grpcPort)
+		grpcServer.SetLogger(log.Default())
+		if launcher != nil {
+			launcher.AddService(grpcServer)
+		}
+		serverCount++
+
+		log.Info("Business gRPC server registered",
+			log.Field{Key: "port", Value: cfg.BusinessGRPCPort},
+			log.Field{Key: "address", Value: grpcPort})
+	}
+
+	if serverCount == 0 {
+		log.Info("No business servers enabled - only infrastructure services will run")
+	} else {
+		log.Info("Business servers registered",
+			log.Field{Key: "count", Value: serverCount},
+			log.Field{Key: "http_enabled", Value: cfg.EnableBusinessHTTP},
+			log.Field{Key: "grpc_enabled", Value: cfg.EnableBusinessGRPC})
+	}
+
+	return nil
+}
+
 // registerInfraServices registers core infrastructure services
-// (unified monitoring service with metrics and health endpoints) with the launcher.
+// (health check and metrics services) with the launcher.
+// These services run on separate ports for security and monitoring isolation.
+//
+// Parameters:
+//   - launcher: The service launcher to register services with
+//   - cfg: Service configuration containing service settings
+//
+// Behavior:
+//   - Registers health check service if ENABLE_HEALTH_CHECK is true
+//   - Registers metrics service if ENABLE_METRICS is true
+//   - Logs service registration and endpoint information
 func registerInfraServices(launcher *service.Launcher, cfg *config.Config) {
-	// Unified monitoring service (metrics + health on same port)
-	monitoringService := monitoring.NewMonitoringService(cfg.MetricsPort)
-	launcher.AddService(monitoringService)
-	log.Info("Monitoring service registered",
-		log.Field{Key: "port", Value: cfg.MetricsPort},
-		log.Field{Key: "endpoints", Value: "/metrics, /healthz, /livez, /readyz"})
+	var serviceCount int
+
+	// Register health check service if enabled
+	if cfg.EnableHealthCheck {
+		healthService := monitoring.NewHealthService(cfg.HealthCheckPort)
+		launcher.AddService(healthService)
+		serviceCount++
+
+		log.Info("Health check service registered",
+			log.Field{Key: "port", Value: cfg.HealthCheckPort},
+			log.Field{Key: "endpoints", Value: "/healthz, /livez, /readyz"})
+	}
+
+	// Register metrics service if enabled
+	if cfg.EnableMetrics {
+		metricsService := monitoring.NewMetricsService(cfg.MetricsPort)
+		launcher.AddService(metricsService)
+		serviceCount++
+
+		log.Info("Metrics service registered",
+			log.Field{Key: "port", Value: cfg.MetricsPort},
+			log.Field{Key: "endpoints", Value: "/metrics"})
+	}
+
+	if serviceCount == 0 {
+		log.Info("No infrastructure services enabled")
+	} else {
+		log.Info("Infrastructure services registered",
+			log.Field{Key: "count", Value: serviceCount},
+			log.Field{Key: "health_enabled", Value: cfg.EnableHealthCheck},
+			log.Field{Key: "metrics_enabled", Value: cfg.EnableMetrics})
+	}
 }

@@ -1,4 +1,4 @@
-package log
+// Package log provides structured logging for EggyByte services.
 
 import (
 	"fmt"

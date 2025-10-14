@@ -5,35 +5,109 @@ All notable changes to EggyByte Core will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.1] - 2025-01-27
+
+### Added
+- **Initial Release**: First stable release of EggyByte Core v0.0.1
+- **Core Bootstrap Functionality**: Single entry point for service initialization
+- **Configuration Management**: Environment-based configuration with Kubernetes support
+- **Structured Logging**: Context-aware logging with multiple output formats
+- **Database Integration**: MySQL/TiDB support with connection pooling and GORM integration
+- **Health Check Endpoints**: Kubernetes-compatible health checks (/healthz, /livez, /readyz)
+- **Prometheus Metrics**: Metrics exposition (/metrics) with custom collectors
+- **Service Lifecycle Management**: Graceful startup and shutdown handling
+- **HTTP/gRPC Servers**: Business server implementations with handler registration
+- **Comprehensive Documentation**: API reference, architecture guide, and examples
+- **Test Coverage**: 67.9% overall test coverage with isolated method testing
+
+### Features
+- **Bootstrap System**: Single entry point for service initialization
+- **Configuration Management**: Environment-based configuration with Kubernetes support
+- **Structured Logging**: Context-aware logging with multiple output formats
+- **Database Integration**: MySQL/TiDB support with automatic table migration
+- **Service Lifecycle**: Graceful startup and shutdown management
+- **Monitoring**: Built-in Prometheus metrics and health checks
+- **Documentation**: Comprehensive guides and API reference
+
+### Architecture
+- Modular design with clear separation of concerns
+- Convention over configuration approach
+- Production-ready with built-in observability
+- Cloud-native with Kubernetes support
+- Developer-friendly with minimal boilerplate
+
+### Supported Platforms
+- Go 1.25.1+
+- Linux, macOS, Windows
+- Docker and Kubernetes
+- MySQL 8.0+ and TiDB
+- Prometheus monitoring
+
+### Documentation
+- [Getting Started Guide](docs/GETTING_STARTED.md)
+- [Architecture Guide](docs/ARCHITECTURE.md)
+- [API Reference](docs/API_REFERENCE.md)
+- [Migration Guide](docs/MIGRATION.md)
+- [Contributing Guide](CONTRIBUTING.md)
+
 ## [Unreleased]
 
 ### Added
-- Comprehensive English documentation for all public APIs
-- Detailed code comments with examples and usage patterns
-- Thread safety documentation for concurrent operations
-- Performance notes and best practices in documentation
-- Contributing guidelines and development standards
-- Apache License 2.0 for open source compatibility
+- **New Server Module (`pkg/server`)**: HTTP and gRPC business server implementations
+  - `HTTPServer` with handler registration and lifecycle management
+  - `GRPCServer` with reflection support and custom options
+  - `ServerManager` for coordinating multiple servers
+  - Comprehensive interfaces for loose coupling and testing
+- **Enhanced Monitoring Module (`pkg/monitoring`)**: Split into separate services
+  - `HealthService` for health check endpoints (/healthz, /livez, /readyz)
+  - `MetricsService` for Prometheus metrics exposition (/metrics)
+  - Support for custom health checkers and metrics collectors
+- **Enhanced Configuration System**: New environment variables for flexible service control
+  - `BUSINESS_HTTP_PORT` (default: 8080) - HTTP API server port
+  - `BUSINESS_GRPC_PORT` (default: 9090) - gRPC API server port
+  - `HEALTH_CHECK_PORT` (default: 8081) - Health check service port
+  - `METRICS_PORT` (default: 9091) - Metrics service port
+  - `ENABLE_BUSINESS_HTTP` (default: true) - Enable/disable HTTP server
+  - `ENABLE_BUSINESS_GRPC` (default: true) - Enable/disable gRPC server
+  - `ENABLE_HEALTH_CHECK` (default: true) - Enable/disable health service
+  - `ENABLE_METRICS` (default: true) - Enable/disable metrics service
+- **Enhanced Bootstrap Function**: Integrated business server management
+  - Conditional service startup based on configuration flags
+  - Automatic registration of HTTP/gRPC servers
+  - Separate health check and metrics services
+  - Improved service lifecycle management
+- **Comprehensive Test Coverage**: Added tests for all new modules
+  - Server module tests (HTTP, gRPC, interfaces)
+  - Monitoring module tests (health, metrics)
+  - Bootstrap integration tests
+  - Mock implementations for interface testing
+- **Comprehensive English Documentation**: Detailed comments and examples
+  - All public APIs documented with usage examples
+  - Thread safety documentation for concurrent operations
+  - Performance notes and best practices
+  - Updated API reference with new modules
 
 ### Changed
-- Converted project to pure Go library (removed CLI tools and deployment configs)
-- Updated license from proprietary to Apache License 2.0
-- Enhanced test coverage and fixed data race conditions
-- Improved error handling and documentation
-- Standardized code formatting and linting
+- **BREAKING**: Renamed `Port` field to `BusinessHTTPPort` in Config struct
+- **BREAKING**: Split `MonitoringService` into separate `HealthService` and `MetricsService`
+- **BREAKING**: Updated Bootstrap function to use new server and monitoring modules
+- Enhanced project structure with modern Go library standards
+- Improved error handling with nil checks and validation
+- Standardized logger interface usage across all modules
+- Updated all documentation to reflect new architecture
 
 ### Fixed
-- Data race conditions in health and metrics services
-- Thread safety issues in test mocks
-- Compilation errors in test files
-- Race conditions in service launcher tests
+- Fixed logger interface inconsistencies (`*log.Logger` → `log.Logger`)
+- Fixed Prometheus handler imports in metrics tests
+- Fixed nil pointer panics in ServerManager
+- Fixed compilation errors in test files
+- Fixed race conditions in service tests
+- Fixed HTTP handler testing issues
 
 ### Removed
-- CLI command implementations
-- Deployment configurations
-- Binary build targets
-- Release automation for executables
-- Kubernetes deployment files
+- Legacy `pkg/monitoring/service.go` (split into health.go and metrics.go)
+- Old `pkg/metrics` and `pkg/health` modules (replaced by `pkg/monitoring`)
+- Deprecated configuration fields and methods
 
 ## [v1.1.0] - 2025-01-01
 

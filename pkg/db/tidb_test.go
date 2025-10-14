@@ -201,7 +201,7 @@ func TestTiDBInitializer_ContextCancellation(t *testing.T) {
 
 	err := initializer.Init(ctx)
 
-	// Should fail due to cancelled context or connection error
+	// Should fail due to canceled context or connection error
 	assert.Error(t, err)
 }
 

@@ -1,4 +1,4 @@
-package config
+// Package config provides unified configuration management for EggyByte services.
 
 import (
 	"fmt"
@@ -81,16 +81,30 @@ func ValidateConfig(cfg *Config) error {
 		return fmt.Errorf("service name cannot be empty")
 	}
 
-	if cfg.Port < 1 || cfg.Port > 65535 {
-		return fmt.Errorf("port must be between 1 and 65535, got: %d", cfg.Port)
+	if cfg.BusinessHTTPPort < 1 || cfg.BusinessHTTPPort > 65535 {
+		return fmt.Errorf("business HTTP port must be between 1 and 65535, got: %d", cfg.BusinessHTTPPort)
+	}
+
+	if cfg.BusinessGRPCPort < 1 || cfg.BusinessGRPCPort > 65535 {
+		return fmt.Errorf("business gRPC port must be between 1 and 65535, got: %d", cfg.BusinessGRPCPort)
+	}
+
+	if cfg.HealthCheckPort < 1 || cfg.HealthCheckPort > 65535 {
+		return fmt.Errorf("health check port must be between 1 and 65535, got: %d", cfg.HealthCheckPort)
 	}
 
 	if cfg.MetricsPort < 1 || cfg.MetricsPort > 65535 {
 		return fmt.Errorf("metrics port must be between 1 and 65535, got: %d", cfg.MetricsPort)
 	}
 
-	if cfg.Port == cfg.MetricsPort {
-		return fmt.Errorf("business port and metrics port must be different")
+	// Check for port conflicts
+	ports := []int{cfg.BusinessHTTPPort, cfg.BusinessGRPCPort, cfg.HealthCheckPort, cfg.MetricsPort}
+	for i := 0; i < len(ports); i++ {
+		for j := i + 1; j < len(ports); j++ {
+			if ports[i] == ports[j] {
+				return fmt.Errorf("ports must be unique, found duplicate: %d", ports[i])
+			}
+		}
 	}
 
 	validLogLevels := map[string]bool{
