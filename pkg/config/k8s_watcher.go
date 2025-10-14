@@ -1,4 +1,5 @@
 // Package config provides unified configuration management for EggyByte services.
+package config
 
 import (
 	"context"

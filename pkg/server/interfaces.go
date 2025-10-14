@@ -1,10 +1,13 @@
 // Package server provides HTTP and gRPC server implementations for EggyByte services.
+package server
 
 import (
 	"context"
 	"net/http"
 
 	"google.golang.org/grpc"
+
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/log"
 )
 
 // HTTPServerInterface defines the interface for business HTTP servers.
@@ -133,6 +136,7 @@ func (m *ServerManager) Start(ctx context.Context) error {
 			if err := m.httpServer.Start(ctx); err != nil {
 				// Log error but don't return it here since we're in a goroutine
 				// The main goroutine will handle the error through context cancellation
+				log.Default().Error("HTTP server failed to start", log.Field{Key: "error", Value: err})
 			}
 		}()
 	}
@@ -143,6 +147,7 @@ func (m *ServerManager) Start(ctx context.Context) error {
 			if err := m.grpcServer.Start(ctx); err != nil {
 				// Log error but don't return it here since we're in a goroutine
 				// The main goroutine will handle the error through context cancellation
+				log.Default().Error("gRPC server failed to start", log.Field{Key: "error", Value: err})
 			}
 		}()
 	}

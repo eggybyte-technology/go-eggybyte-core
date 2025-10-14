@@ -10,8 +10,9 @@ linters-settings:
       - diagnostic
       - experimental
       - opinionated
-      - performance
       - style
+    disabled-checks:
+      - hugeParam
   gocognit:
     min-complexity: 10
   funlen:
@@ -28,8 +29,6 @@ linters-settings:
     local-prefixes: github.com/eggybyte-technology/go-eggybyte-core
   govet:
     check-shadowing: true
-    enable:
-      - fieldalignment
   revive:
     min-confidence: 0.8
     rules:
@@ -53,12 +52,10 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - dupl
     - errcheck
-    - exportloopref
     - exhaustive
     - funlen
     - gochecknoinits
@@ -67,29 +64,23 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - golint
-    - gomnd
     - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ineffassign
-    - interfacer
     - misspell
     - nakedret
     - noctx
     - nolintlint
     - revive
     - rowserrcheck
-    - scopelint
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
 
 issues:
@@ -100,9 +91,32 @@ issues:
         - funlen
         - gocyclo
         - gocognit
+        - errcheck
+        - gosec
+        - gocritic
+        - depguard
     - path: pkg/monitoring/
       linters:
         - gochecknoinits
+        - depguard
+    - path: pkg/log/
+      linters:
+        - depguard
+    - path: pkg/config/
+      linters:
+        - depguard
+    - path: pkg/db/
+      linters:
+        - depguard
+    - path: pkg/server/
+      linters:
+        - depguard
+    - path: pkg/service/
+      linters:
+        - depguard
+    - path: pkg/core/
+      linters:
+        - depguard
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0

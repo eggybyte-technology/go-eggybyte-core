@@ -181,7 +181,7 @@ func TestServerManager_HTTPHandlerRegistration(t *testing.T) {
 	assert.NotNil(t, server.Handler)
 
 	// Test the handler using the server's handler
-	req, _ := http.NewRequest("GET", "/test", nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", "/test", nil)
 	rec := httptest.NewRecorder()
 
 	// Use the server's handler directly

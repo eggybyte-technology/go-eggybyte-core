@@ -1,4 +1,5 @@
 // Package db provides database integration for EggyByte services.
+package db
 
 import (
 	"context"

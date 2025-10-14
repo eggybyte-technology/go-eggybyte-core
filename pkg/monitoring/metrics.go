@@ -1,9 +1,11 @@
 // Package monitoring provides health check and metrics exposition for EggyByte services.
+package monitoring
 
 import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,7 +14,6 @@ import (
 
 	"github.com/eggybyte-technology/go-eggybyte-core/pkg/log"
 )
-
 
 // MetricsService provides Prometheus metrics exposition on a dedicated port
 // for security and monitoring isolation.
@@ -307,7 +308,7 @@ func (m *MetricsService) GetRegistry() *prometheus.Registry {
 // Parameters:
 //   - logger: The logger instance to use for this service
 func (m *MetricsService) SetLogger(logger interface{}) {
-	if l, ok := logger.(log.Logger); ok {
+	if l := log.SetLoggerHelper(logger); l != nil {
 		m.logger = l
 	}
 }

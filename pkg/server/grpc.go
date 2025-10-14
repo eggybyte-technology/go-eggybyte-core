@@ -1,4 +1,5 @@
 // Package server provides HTTP and gRPC server implementations for EggyByte services.
+package server
 
 import (
 	"context"
@@ -6,9 +7,10 @@ import (
 	"net"
 	"sync"
 
-	"github.com/eggybyte-technology/go-eggybyte-core/pkg/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	"github.com/eggybyte-technology/go-eggybyte-core/pkg/log"
 )
 
 // GRPCServer represents a business gRPC server for serving RPC APIs.
@@ -218,7 +220,7 @@ func (s *GRPCServer) GetServer() *grpc.Server {
 // Parameters:
 //   - logger: The logger instance to use for this server
 func (s *GRPCServer) SetLogger(logger interface{}) {
-	if l, ok := logger.(log.Logger); ok {
+	if l := log.SetLoggerHelper(logger); l != nil {
 		s.logger = l
 	}
 }

@@ -248,7 +248,7 @@ func (h *HealthService) GetCheckerCount() int {
 // Parameters:
 //   - logger: The logger instance to use for this service
 func (h *HealthService) SetLogger(logger interface{}) {
-	if l, ok := logger.(log.Logger); ok {
+	if l := log.SetLoggerHelper(logger); l != nil {
 		h.logger = l
 	}
 }
@@ -262,7 +262,9 @@ func (h *HealthService) SetLogger(logger interface{}) {
 //   - r: HTTP request
 func (h *HealthService) handleLivez(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	if _, err := w.Write([]byte("OK")); err != nil {
+		h.logger.Error("Failed to write livez response", log.Field{Key: "error", Value: err})
+	}
 }
 
 // handleReadyz handles readiness probe requests.
@@ -307,11 +309,13 @@ func (h *HealthService) handleReadyz(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable)
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":    healthy,
 		"checks":    results,
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
-	})
+	}); err != nil {
+		h.logger.Error("Failed to encode health response", log.Field{Key: "error", Value: err})
+	}
 }
 
 // handleHealthz handles combined health check requests.

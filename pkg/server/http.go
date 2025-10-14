@@ -211,7 +211,7 @@ func (s *HTTPServer) GetServer() *http.Server {
 // Parameters:
 //   - logger: The logger instance to use for this server
 func (s *HTTPServer) SetLogger(logger interface{}) {
-	if l, ok := logger.(log.Logger); ok {
+	if l := log.SetLoggerHelper(logger); l != nil {
 		s.logger = l
 	}
 }

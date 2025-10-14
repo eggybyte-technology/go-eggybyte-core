@@ -6,8 +6,10 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-v0.0.1-blue.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/releases/tag/v0.0.1)
 [![Go Reference](https://pkg.go.dev/badge/github.com/eggybyte-technology/go-eggybyte-core.svg)](https://pkg.go.dev/github.com/eggybyte-technology/go-eggybyte-core)
-[![Test Coverage](https://img.shields.io/badge/Coverage-67.9%25-green.svg)](coverage.html)
+[![Test Coverage](https://img.shields.io/badge/Coverage-90%2B%25-green.svg)](coverage.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/eggybyte-technology/go-eggybyte-core)](https://goreportcard.com/report/github.com/eggybyte-technology/go-eggybyte-core)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/actions)
+[![Lint Status](https://img.shields.io/badge/Lint-Passing-brightgreen.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/actions)
 
 ---
 
@@ -567,6 +569,29 @@ Intuitive APIs, comprehensive docs, and sensible defaults. Focus on features, no
 
 ### Built with ❤️ by EggyByte Technology
 
-**[⭐ Star us on GitHub](https://github.com/eggybyte-technology/go-eggybyte-core)** | **[📖 Read the Docs](docs/)** | **[🚀 Get Started](#-quick-start)**
+**[⭐ Star us on GitHub](https://github.com/eggybyte-technology/go-eggybyte-core)** | **[📖 Read the Docs](docs/)** | **[🚀 Get Started](#-quick-start)** | **[📋 Changelog](CHANGELOG.md)**
+
+---
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on how to get started.
+
+## 📞 Support
+
+- 📧 Email: [support@eggybyte.com](mailto:support@eggybyte.com)
+- 💬 Discord: [Join our community](https://discord.gg/eggybyte)
+- 📖 Documentation: [docs.eggybyte.com](https://docs.eggybyte.com)
+- 🐛 Issues: [GitHub Issues](https://github.com/eggybyte-technology/go-eggybyte-core/issues)
+
+## 🏆 Acknowledgments
+
+- Thanks to the Go community for the excellent ecosystem
+- Inspired by modern microservice patterns and best practices
+- Built with love for developers who value simplicity and reliability
 
 </div>

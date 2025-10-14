@@ -1,4 +1,5 @@
 // Package config provides unified configuration management for EggyByte services.
+package config
 
 import (
 	"fmt"
@@ -77,36 +78,63 @@ func MustReadFromEnv(cfg interface{}) {
 //   - LogLevel must be one of: debug, info, warn, error, fatal
 //   - If K8s watching enabled, namespace and configmap name required
 func ValidateConfig(cfg *Config) error {
-	if cfg.ServiceName == "" {
+	if err := validateServiceName(cfg.ServiceName); err != nil {
+		return err
+	}
+
+	if err := validatePorts(cfg); err != nil {
+		return err
+	}
+
+	if err := validateLogLevel(cfg.LogLevel); err != nil {
+		return err
+	}
+
+	if err := validateK8sConfig(cfg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateServiceName validates the service name
+func validateServiceName(serviceName string) error {
+	if serviceName == "" {
 		return fmt.Errorf("service name cannot be empty")
 	}
+	return nil
+}
 
-	if cfg.BusinessHTTPPort < 1 || cfg.BusinessHTTPPort > 65535 {
-		return fmt.Errorf("business HTTP port must be between 1 and 65535, got: %d", cfg.BusinessHTTPPort)
+// validatePorts validates all port configurations
+func validatePorts(cfg *Config) error {
+	ports := map[string]int{
+		"business HTTP": cfg.BusinessHTTPPort,
+		"business gRPC": cfg.BusinessGRPCPort,
+		"health check":  cfg.HealthCheckPort,
+		"metrics":       cfg.MetricsPort,
 	}
 
-	if cfg.BusinessGRPCPort < 1 || cfg.BusinessGRPCPort > 65535 {
-		return fmt.Errorf("business gRPC port must be between 1 and 65535, got: %d", cfg.BusinessGRPCPort)
-	}
-
-	if cfg.HealthCheckPort < 1 || cfg.HealthCheckPort > 65535 {
-		return fmt.Errorf("health check port must be between 1 and 65535, got: %d", cfg.HealthCheckPort)
-	}
-
-	if cfg.MetricsPort < 1 || cfg.MetricsPort > 65535 {
-		return fmt.Errorf("metrics port must be between 1 and 65535, got: %d", cfg.MetricsPort)
-	}
-
-	// Check for port conflicts
-	ports := []int{cfg.BusinessHTTPPort, cfg.BusinessGRPCPort, cfg.HealthCheckPort, cfg.MetricsPort}
-	for i := 0; i < len(ports); i++ {
-		for j := i + 1; j < len(ports); j++ {
-			if ports[i] == ports[j] {
-				return fmt.Errorf("ports must be unique, found duplicate: %d", ports[i])
-			}
+	// Validate port ranges
+	for name, port := range ports {
+		if port < 1 || port > 65535 {
+			return fmt.Errorf("%s port must be between 1 and 65535, got: %d", name, port)
 		}
 	}
 
+	// Validate port uniqueness
+	portMap := make(map[int]string)
+	for name, port := range ports {
+		if existing, exists := portMap[port]; exists {
+			return fmt.Errorf("%s and %s ports cannot be the same: %d", name, existing, port)
+		}
+		portMap[port] = name
+	}
+
+	return nil
+}
+
+// validateLogLevel validates the log level
+func validateLogLevel(logLevel string) error {
 	validLogLevels := map[string]bool{
 		"debug": true,
 		"info":  true,
@@ -114,17 +142,24 @@ func ValidateConfig(cfg *Config) error {
 		"error": true,
 		"fatal": true,
 	}
-	if !validLogLevels[cfg.LogLevel] {
-		return fmt.Errorf("invalid log level: %s (must be debug, info, warn, error, or fatal)", cfg.LogLevel)
+	if !validLogLevels[logLevel] {
+		return fmt.Errorf("invalid log level: %s (must be debug, info, warn, error, or fatal)", logLevel)
+	}
+	return nil
+}
+
+// validateK8sConfig validates Kubernetes configuration
+func validateK8sConfig(cfg *Config) error {
+	if !cfg.EnableK8sConfigWatch {
+		return nil
 	}
 
-	if cfg.EnableK8sConfigWatch {
-		if cfg.K8sNamespace == "" {
-			return fmt.Errorf("kubernetes namespace required when config watch enabled")
-		}
-		if cfg.K8sConfigMapName == "" {
-			return fmt.Errorf("kubernetes configmap name required when config watch enabled")
-		}
+	if cfg.K8sNamespace == "" {
+		return fmt.Errorf("kubernetes namespace required when config watch enabled")
+	}
+
+	if cfg.K8sConfigMapName == "" {
+		return fmt.Errorf("kubernetes configmap name required when config watch enabled")
 	}
 
 	return nil

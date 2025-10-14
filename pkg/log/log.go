@@ -240,3 +240,27 @@ func (l *zapLogger) convertFields(fields []Field) []zap.Field {
 	}
 	return zapFields
 }
+
+// SetLoggerHelper provides a common implementation for SetLogger methods
+// across different service types. This helper eliminates code duplication
+// while maintaining type safety through interface{} parameter.
+//
+// Parameters:
+//   - logger: The logger instance to set (must implement Logger interface)
+//
+// Returns:
+//   - Logger: The converted logger instance, or nil if conversion fails
+//
+// Usage:
+//
+//	func (s *MyService) SetLogger(logger interface{}) {
+//	    if l := log.SetLoggerHelper(logger); l != nil {
+//	        s.logger = l
+//	    }
+//	}
+func SetLoggerHelper(logger interface{}) Logger {
+	if l, ok := logger.(Logger); ok {
+		return l
+	}
+	return nil
+}

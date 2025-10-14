@@ -34,8 +34,9 @@
       "Work" shall mean the work of authorship, whether in Source or
       Object form, made available under the License, as indicated by a
       copyright notice that is included in or attached to the work
-      (which shall not include communications that are solely to notify
-      users of changes to the work).
+      (which shall not include communications that are clearly marked or
+      otherwise designated in writing by the copyright owner as "Not a
+      Contribution").
 
       "Derivative Works" shall mean any work, whether in Source or Object
       form, that is based upon (or derived from) the Work and for which the
@@ -57,22 +58,15 @@
       systems, and issue tracking systems that are managed by, or on behalf
       of, the Licensor for the purpose of discussing and improving the Work,
       but excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
-
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+      designated in writing by the copyright owner as "Not a Contribution".
 
    2. Grant of Copyright License. Subject to the terms and conditions of
       this License, each Contributor hereby grants to You a perpetual,
       worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to use, reproduce, modify, merge, publish,
-      distribute, sublicense, and/or sell copies of the Work, and to
-      permit persons to whom the Work is furnished to do so, subject to
-      the following conditions:
-
-      The above copyright notice and this permission notice shall be
-      included in all copies or substantial portions of the Work.
+      copyright license to use, reproduce, modify, distribute, and prepare
+      Derivative Works of, and to display and perform the Work and such
+      Derivative Works in any medium, whether now known or hereafter
+      invented.
 
    3. Grant of Patent License. Subject to the terms and conditions of
       this License, each Contributor hereby grants to You a perpetual,
@@ -188,7 +182,7 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright 2024 EggyByte Technology
+   Copyright 2025 EggyByte Technology
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

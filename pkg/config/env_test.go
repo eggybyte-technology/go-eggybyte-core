@@ -209,7 +209,7 @@ func TestValidateConfig_SamePort(t *testing.T) {
 	err := ValidateConfig(cfg)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "ports must be unique")
+	assert.Contains(t, err.Error(), "business HTTP and metrics ports cannot be the same")
 }
 
 // TestValidateConfig_InvalidLogLevel tests log level validation.

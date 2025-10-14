@@ -200,7 +200,8 @@ func TestHealthService_handleReadyz_Timeout(t *testing.T) {
 
 	// Create request with very short timeout
 	req := httptest.NewRequest("GET", "/readyz", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "timeout", 1*time.Nanosecond))
+	type timeoutKey string
+	req = req.WithContext(context.WithValue(req.Context(), timeoutKey("timeout"), 1*time.Nanosecond))
 	rec := httptest.NewRecorder()
 
 	service.handleReadyz(rec, req)

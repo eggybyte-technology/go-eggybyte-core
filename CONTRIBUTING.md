@@ -7,16 +7,15 @@ Thank you for your interest in contributing to EggyByte Core! This document prov
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
 - [Development Setup](#development-setup)
-- [Contributing Guidelines](#contributing-guidelines)
-- [Code Standards](#code-standards)
-- [Testing Requirements](#testing-requirements)
-- [Documentation Standards](#documentation-standards)
-- [Pull Request Process](#pull-request-process)
+- [Contributing Process](#contributing-process)
+- [Coding Standards](#coding-standards)
+- [Testing Guidelines](#testing-guidelines)
+- [Documentation](#documentation)
 - [Release Process](#release-process)
 
 ## 🤝 Code of Conduct
 
-This project follows the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating, you agree to uphold this code.
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold this code.
 
 ## 🚀 Getting Started
 
@@ -24,256 +23,178 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 - Go 1.25.1 or later
 - Git
-- Make (for running development commands)
+- Make (for build automation)
+- Docker (optional, for testing)
 
-### Fork and Clone
+### Development Setup
 
-1. Fork the repository on GitHub
-2. Clone your fork locally:
+1. **Fork and Clone**
    ```bash
    git clone https://github.com/your-username/go-eggybyte-core.git
    cd go-eggybyte-core
    ```
 
-## 🛠️ Development Setup
+2. **Install Dependencies**
+   ```bash
+   go mod download
+   ```
 
-### Install Dependencies
+3. **Run Tests**
+   ```bash
+   make test
+   ```
+
+4. **Run Linting**
+   ```bash
+   make lint
+   ```
+
+5. **Full Check**
+   ```bash
+   make check
+   ```
+
+## 🔄 Contributing Process
+
+### 1. Create an Issue
+
+Before starting work, please:
+- Check existing issues to avoid duplicates
+- Create an issue describing the problem or feature
+- Wait for maintainer approval before starting work
+
+### 2. Create a Branch
 
 ```bash
-make deps
+git checkout -b feature/your-feature-name
+# or
+git checkout -b fix/your-bug-fix
 ```
 
-### Run Tests
+### 3. Make Changes
+
+- Follow our [coding standards](#coding-standards)
+- Write tests for new functionality
+- Update documentation as needed
+- Ensure all tests pass
+
+### 4. Commit Changes
+
+Use conventional commit messages:
 
 ```bash
-make test
+git commit -m "feat: add new health check endpoint"
+git commit -m "fix: resolve database connection timeout"
+git commit -m "docs: update API documentation"
 ```
 
-### Run Linting
+### 5. Push and Create PR
 
 ```bash
-make lint
+git push origin feature/your-feature-name
 ```
 
-### Generate Coverage Report
+Then create a Pull Request with:
+- Clear description of changes
+- Reference to related issues
+- Screenshots (if applicable)
+- Test results
 
-```bash
-make test-coverage
-```
-
-## 📝 Contributing Guidelines
-
-### Types of Contributions
-
-We welcome contributions in the following areas:
-
-- **Bug Fixes**: Fix issues reported in GitHub Issues
-- **Feature Enhancements**: Add new functionality to existing packages
-- **Documentation**: Improve README, code comments, and examples
-- **Performance Improvements**: Optimize existing code
-- **Test Coverage**: Add tests for uncovered code paths
-
-### Before You Start
-
-1. **Check Existing Issues**: Look for existing issues or discussions about your idea
-2. **Create an Issue**: For significant changes, create an issue first to discuss the approach
-3. **Small Changes**: For small fixes, you can submit a PR directly
-
-## 🎯 Code Standards
+## 📝 Coding Standards
 
 ### Go Code Style
 
-- Follow standard Go formatting (`gofmt`)
-- Use `golangci-lint` for code quality checks
-- All public functions, types, and packages must have comprehensive English documentation
+- Follow [Effective Go](https://golang.org/doc/effective_go.html)
+- Use `gofmt` and `goimports` for formatting
+- Maximum 50 lines per public method
+- Maximum 100 lines per file (exceptions allowed with justification)
 - Use meaningful variable and function names
-- Keep functions focused and small (≤50 lines for public functions)
+- Write comprehensive comments for public APIs
 
-### Documentation Requirements
+### Package Organization
 
-All public APIs must include:
-
-```go
-// PackageName provides functionality for...
-package packagename
-
-// TypeName represents a... 
-// It provides methods for...
-//
-// Thread Safety: Safe for concurrent use when properly initialized
-//
-// Example:
-//   instance := NewTypeName()
-//   result := instance.DoSomething()
-type TypeName struct {
-    // FieldName represents...
-    FieldName string
-}
-
-// MethodName performs a specific operation.
-// It handles... and returns...
-//
-// Parameters:
-//   - param1: Description of parameter
-//   - param2: Description of parameter
-//
-// Returns:
-//   - result: Description of return value
-//   - error: Description of error conditions
-//
-// Example:
-//   result, err := instance.MethodName("value1", "value2")
-//   if err != nil {
-//       return err
-//   }
-func (t *TypeName) MethodName(param1, param2 string) (result string, error) {
-    // Implementation
-}
+```
+pkg/
+├── core/           # Core bootstrap and initialization
+├── config/         # Configuration management
+├── log/            # Structured logging
+├── db/             # Database integration
+├── server/         # HTTP/gRPC servers
+├── monitoring/     # Health checks and metrics
+└── service/        # Service lifecycle management
 ```
 
 ### Error Handling
 
-- Use wrapped errors with context: `fmt.Errorf("operation failed: %w", err)`
-- Return meaningful error messages
-- Use custom error types for different error categories
-- Always handle errors explicitly
+- Use `error` interface, not `commonpb.ErrorInfo` directly
+- Provide meaningful error messages
+- Include context in error messages
+- Use `fmt.Errorf` with `%w` for error wrapping
 
-### Concurrency
+### Logging
 
-- Use `sync.RWMutex` for read-write locks
-- Use `atomic` operations for simple counters and flags
-- Document thread safety guarantees
-- Avoid data races (use `go test -race`)
+- Use structured logging with `log.Field`
+- Include request IDs for tracing
+- Log at appropriate levels (Debug, Info, Warn, Error)
+- Never log sensitive information
 
-## 🧪 Testing Requirements
+## 🧪 Testing Guidelines
 
-### Test Coverage
+### Test Requirements
 
-- Maintain minimum 80% test coverage for new code
-- Aim for 90%+ coverage for critical packages
-- Use table-driven tests for multiple scenarios
-- Include both positive and negative test cases
+- **Coverage**: Minimum 90% for core modules
+- **Types**: Unit tests, integration tests, and benchmarks
+- **Naming**: Use descriptive test names
+- **Isolation**: Tests should be independent and parallelizable
 
 ### Test Structure
 
 ```go
-func TestFunctionName(t *testing.T) {
-    tests := []struct {
-        name     string
-        input    InputType
-        expected ExpectedType
-        wantErr  bool
-    }{
-        {
-            name:     "successful_case",
-            input:    validInput,
-            expected: expectedOutput,
-            wantErr:  false,
-        },
-        {
-            name:     "error_case",
-            input:    invalidInput,
-            expected: nil,
-            wantErr:  true,
-        },
-    }
-
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            result, err := FunctionName(tt.input)
-            
-            if tt.wantErr {
-                assert.Error(t, err)
-            } else {
-                assert.NoError(t, err)
-                assert.Equal(t, tt.expected, result)
-            }
-        })
-    }
+func TestFunctionName_Scenario_ExpectedResult(t *testing.T) {
+    // Arrange
+    // Act
+    // Assert
 }
 ```
 
 ### Running Tests
 
 ```bash
-# Run all tests
+# All tests
 make test
 
-# Run tests with race detection
-go test -race ./...
+# Specific package
+go test ./pkg/core/...
 
-# Run tests with coverage
+# With coverage
 make test-coverage
 
-# Run specific package tests
-go test ./pkg/config
+# Benchmarks
+make benchmark
 ```
 
-## 📚 Documentation Standards
+## 📚 Documentation
 
-### Code Comments
+### Code Documentation
 
-- All public functions, types, and packages must have English documentation
-- Use complete sentences ending with periods
-- Include examples for complex functions
-- Document thread safety guarantees
-- Explain parameters, return values, and error conditions
+- All public APIs must have Go doc comments
+- Use English for all comments and documentation
+- Include usage examples in doc comments
+- Document parameters, return values, and errors
 
 ### README Updates
 
-- Update README.md for new features or significant changes
-- Keep examples current and working
-- Update badges and links as needed
+- Update README.md for new features
+- Include usage examples
+- Update badges and links
+- Keep the quick start section current
 
 ### API Documentation
 
-- Use godoc-compatible comments
-- Include usage examples
-- Document all exported symbols
-
-## 🔄 Pull Request Process
-
-### Before Submitting
-
-1. **Run Tests**: Ensure all tests pass
-2. **Check Coverage**: Verify test coverage meets requirements
-3. **Run Linting**: Fix any linting issues
-4. **Update Documentation**: Update relevant documentation
-5. **Rebase**: Rebase on latest main branch
-
-### PR Description Template
-
-```markdown
-## Description
-Brief description of changes
-
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Documentation update
-
-## Testing
-- [ ] Tests pass locally
-- [ ] New tests added for new functionality
-- [ ] Test coverage maintained/improved
-
-## Checklist
-- [ ] Code follows project style guidelines
-- [ ] Self-review completed
-- [ ] Documentation updated
-- [ ] No breaking changes (or clearly documented)
-
-## Related Issues
-Fixes #(issue number)
-```
-
-### Review Process
-
-1. **Automated Checks**: CI/CD pipeline runs tests and linting
-2. **Code Review**: At least one maintainer reviews the PR
-3. **Testing**: Reviewer tests the changes locally
-4. **Approval**: PR approved and merged
+- Document all public interfaces
+- Include parameter descriptions
+- Provide usage examples
+- Update when APIs change
 
 ## 🚀 Release Process
 
@@ -284,66 +205,69 @@ We follow [Semantic Versioning](https://semver.org/):
 - **MINOR**: New features (backward compatible)
 - **PATCH**: Bug fixes (backward compatible)
 
-### Release Steps
+### Release Checklist
 
-1. **Update Version**: Update version in go.mod and documentation
-2. **Update CHANGELOG**: Add entry for new version
-3. **Create Tag**: Create git tag for the version
-4. **Publish**: Release is automatically published via GitHub Actions
+- [ ] All tests pass (`make check`)
+- [ ] Documentation updated
+- [ ] CHANGELOG.md updated
+- [ ] Version bumped in go.mod
+- [ ] Release notes prepared
+- [ ] Tag created
+- [ ] Release published
 
-### Changelog Format
-
-```markdown
-## [1.2.0] - 2024-01-15
-
-### Added
-- New feature description
-- Another new feature
-
-### Changed
-- Changed behavior description
-
-### Fixed
-- Bug fix description
-
-### Removed
-- Removed feature description
-```
-
-## 🐛 Reporting Issues
-
-### Bug Reports
+## 🐛 Bug Reports
 
 When reporting bugs, please include:
 
-1. **Environment**: Go version, OS, etc.
-2. **Steps to Reproduce**: Clear steps to reproduce the issue
-3. **Expected Behavior**: What you expected to happen
-4. **Actual Behavior**: What actually happened
-5. **Code Sample**: Minimal code that reproduces the issue
-6. **Error Messages**: Full error messages and stack traces
+1. **Environment**
+   - Go version
+   - Operating system
+   - EggyByte Core version
 
-### Feature Requests
+2. **Reproduction Steps**
+   - Clear, numbered steps
+   - Minimal code example
+   - Expected vs actual behavior
+
+3. **Additional Context**
+   - Error messages
+   - Logs (sanitized)
+   - Related issues
+
+## 💡 Feature Requests
 
 For feature requests, please include:
 
-1. **Use Case**: Why this feature would be useful
-2. **Proposed Solution**: How you envision it working
-3. **Alternatives**: Other solutions you've considered
-4. **Additional Context**: Any other relevant information
+1. **Problem Description**
+   - What problem does this solve?
+   - Why is it important?
+
+2. **Proposed Solution**
+   - How should it work?
+   - Any design considerations?
+
+3. **Alternatives**
+   - Other solutions considered
+   - Workarounds currently used
 
 ## 📞 Getting Help
 
-- **GitHub Issues**: For bugs and feature requests
-- **GitHub Discussions**: For questions and general discussion
-- **Documentation**: Check the README and code comments first
+- 💬 **Discord**: [Join our community](https://discord.gg/eggybyte)
+- 📧 **Email**: [support@eggybyte.com](mailto:support@eggybyte.com)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/eggybyte-technology/go-eggybyte-core/issues)
+- 📖 **Docs**: [Documentation](https://docs.eggybyte.com)
 
-## 🎉 Recognition
+## 🏆 Recognition
 
-Contributors will be recognized in:
-- GitHub contributors list
-- Release notes for significant contributions
-- Project documentation
+Contributors will be:
+- Listed in the project README
+- Mentioned in release notes
+- Invited to the core team (for significant contributions)
+
+## 📄 License
+
+By contributing to EggyByte Core, you agree that your contributions will be licensed under the Apache License 2.0.
+
+---
 
 Thank you for contributing to EggyByte Core! 🥚
-

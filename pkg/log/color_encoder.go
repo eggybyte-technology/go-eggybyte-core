@@ -1,4 +1,5 @@
 // Package log provides structured logging for EggyByte services.
+package log
 
 import (
 	"fmt"
@@ -66,6 +67,14 @@ func (e *ColorfulEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Fiel
 		levelColor = ColorRed + ColorBold
 		messageColor = ColorRed + ColorBold
 		boldPrefix = ColorBold
+	case zapcore.DPanicLevel:
+		levelColor = ColorRed + ColorBold
+		messageColor = ColorRed + ColorBold
+		boldPrefix = ColorBold
+	case zapcore.InvalidLevel:
+		levelColor = ColorWhite
+		messageColor = ColorWhite
+		boldPrefix = ""
 	default:
 		levelColor = ColorWhite
 		messageColor = ColorWhite
@@ -80,13 +89,15 @@ func (e *ColorfulEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Fiel
 	// Format: [timestamp] LEVEL caller: message fields
 	// We'll colorize the level and message parts
 	coloredLine := e.colorizeLogLine(originalLine, levelColor, messageColor, boldPrefix)
-	buf.WriteString(coloredLine)
+	if _, err := buf.WriteString(coloredLine); err != nil {
+		return nil, err
+	}
 
 	return buf, nil
 }
 
 // colorizeLogLine applies colors to different parts of the log line
-func (e *ColorfulEncoder) colorizeLogLine(line, levelColor, messageColor, boldPrefix string) string {
+func (e *ColorfulEncoder) colorizeLogLine(line, levelColor, _ /* messageColor */, boldPrefix string) string {
 	// This is a simplified approach - in a real implementation, you might want to
 	// parse the log line more carefully to apply colors to specific parts
 
@@ -121,51 +132,8 @@ func (e *EnhancedColorfulEncoder) EncodeEntry(entry zapcore.Entry, fields []zapc
 		return nil, err
 	}
 
-	// Enhanced color scheme
-	var levelColor string
-	var messageColor string
-	var timestampColor string
-	var callerColor string
-	var boldPrefix string
-
-	switch entry.Level {
-	case zapcore.DebugLevel:
-		levelColor = ColorGray
-		messageColor = ColorGray
-		timestampColor = ColorGray
-		callerColor = ColorGray
-		boldPrefix = ""
-	case zapcore.InfoLevel:
-		levelColor = ColorCyan + ColorBold
-		messageColor = ColorWhite
-		timestampColor = ColorBlue
-		callerColor = ColorPurple
-		boldPrefix = ""
-	case zapcore.WarnLevel:
-		levelColor = ColorYellow + ColorBold
-		messageColor = ColorYellow
-		timestampColor = ColorBlue
-		callerColor = ColorPurple
-		boldPrefix = ColorBold
-	case zapcore.ErrorLevel:
-		levelColor = ColorRed + ColorBold
-		messageColor = ColorRed
-		timestampColor = ColorBlue
-		callerColor = ColorPurple
-		boldPrefix = ColorBold
-	case zapcore.FatalLevel, zapcore.PanicLevel:
-		levelColor = ColorRed + ColorBold
-		messageColor = ColorRed + ColorBold
-		timestampColor = ColorRed
-		callerColor = ColorRed
-		boldPrefix = ColorBold
-	default:
-		levelColor = ColorWhite
-		messageColor = ColorWhite
-		timestampColor = ColorWhite
-		callerColor = ColorWhite
-		boldPrefix = ""
-	}
+	// Get color scheme for the log level
+	levelColor, messageColor, timestampColor, callerColor, boldPrefix := e.getEnhancedColorScheme(entry.Level)
 
 	// Get the original log line
 	originalLine := buf.String()
@@ -173,13 +141,37 @@ func (e *EnhancedColorfulEncoder) EncodeEntry(entry zapcore.Entry, fields []zapc
 
 	// Apply enhanced coloring
 	coloredLine := e.enhancedColorizeLogLine(originalLine, levelColor, messageColor, timestampColor, callerColor, boldPrefix)
-	buf.WriteString(coloredLine)
+	if _, err := buf.WriteString(coloredLine); err != nil {
+		return nil, err
+	}
 
 	return buf, nil
 }
 
+// getEnhancedColorScheme returns the color scheme for a given log level
+func (e *EnhancedColorfulEncoder) getEnhancedColorScheme(level zapcore.Level) (levelColor, messageColor, timestampColor, callerColor, boldPrefix string) {
+	switch level {
+	case zapcore.DebugLevel:
+		return ColorGray, ColorGray, ColorGray, ColorGray, ""
+	case zapcore.InfoLevel:
+		return ColorCyan + ColorBold, ColorWhite, ColorBlue, ColorPurple, ""
+	case zapcore.WarnLevel:
+		return ColorYellow + ColorBold, ColorYellow, ColorBlue, ColorPurple, ColorBold
+	case zapcore.ErrorLevel:
+		return ColorRed + ColorBold, ColorRed, ColorBlue, ColorPurple, ColorBold
+	case zapcore.FatalLevel, zapcore.PanicLevel:
+		return ColorRed + ColorBold, ColorRed + ColorBold, ColorRed, ColorRed, ColorBold
+	case zapcore.DPanicLevel:
+		return ColorRed + ColorBold, ColorRed + ColorBold, ColorRed, ColorRed, ColorBold
+	case zapcore.InvalidLevel:
+		return ColorWhite, ColorWhite, ColorWhite, ColorWhite, ""
+	default:
+		return ColorWhite, ColorWhite, ColorWhite, ColorWhite, ""
+	}
+}
+
 // enhancedColorizeLogLine applies enhanced colors to different parts of the log line
-func (e *EnhancedColorfulEncoder) enhancedColorizeLogLine(line, levelColor, messageColor, timestampColor, callerColor, boldPrefix string) string {
+func (e *EnhancedColorfulEncoder) enhancedColorizeLogLine(line, levelColor, _ /* messageColor */, _ /* timestampColor */, _ /* callerColor */, boldPrefix string) string {
 	// Enhanced coloring with better parsing
 	// This is a simplified implementation - in practice you might want more sophisticated parsing
 

@@ -1,4 +1,5 @@
 // Package log provides structured logging for EggyByte services.
+package log
 
 import (
 	"context"
@@ -74,7 +75,7 @@ func FromContext(ctx context.Context) Logger {
 //	ctx, requestID := log.WithRequestID(ctx, "")
 //	logger := log.FromContext(ctx).With(log.Field{Key: "request_id", Value: requestID})
 //	ctx = log.WithContext(ctx, logger)
-func WithRequestID(ctx context.Context, requestID string) (context.Context, string) {
+func WithRequestID(ctx context.Context, requestID string) (newCtx context.Context, finalRequestID string) {
 	if requestID == "" {
 		requestID = uuid.New().String()
 	}
