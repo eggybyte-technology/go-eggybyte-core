@@ -4,7 +4,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.25.1+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v0.0.2-blue.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/releases/tag/v0.0.2)
+[![Version](https://img.shields.io/badge/Version-v1.0.2-blue.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/releases/tag/v1.0.2)
 [![Go Reference](https://pkg.go.dev/badge/github.com/eggybyte-technology/go-eggybyte-core.svg)](https://pkg.go.dev/github.com/eggybyte-technology/go-eggybyte-core)
 [![Test Coverage](https://img.shields.io/badge/Coverage-90%2B%25-green.svg)](coverage.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/eggybyte-technology/go-eggybyte-core)](https://goreportcard.com/report/github.com/eggybyte-technology/go-eggybyte-core)
