@@ -38,7 +38,7 @@
       otherwise designated in writing by the copyright owner as "Not a
       Contribution").
 
-      "Derivative Works" shall mean any work, whether in Source or Object
+      "Derivative Works" shall mean a work, whether in Source or Object
       form, that is based upon (or derived from) the Work and for which the
       editorial revisions, annotations, elaborations, or other modifications
       represent, as a whole, an original work of authorship. For the purposes
@@ -113,10 +113,9 @@
           wherever such third-party notices normally appear. The contents
           of the NOTICE file are for informational purposes only and
           do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
+          notices within Derivative Works, alongside or as an addendum to
+          the NOTICE text from the Work, provided that such additional
+          attribution notices cannot be construed as modifying the License.
 
       You may add Your own copyright notice to Your modifications and
       may provide additional or different license terms and conditions

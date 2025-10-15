@@ -1,4 +1,37 @@
 // Package service provides service lifecycle management for EggyByte services.
+// It includes service launcher, graceful shutdown handling, and dependency management
+// for coordinating multiple services within a single application.
+//
+// The service package implements the Service interface pattern for consistent
+// lifecycle management across different service types (HTTP servers, gRPC servers,
+// health check services, etc.).
+//
+// Key Features:
+//   - Unified service lifecycle management (Start, Stop)
+//   - Graceful shutdown with configurable timeouts
+//   - Dependency initialization and ordering
+//   - Signal handling for clean termination
+//   - Concurrent service execution with error handling
+//
+// Example Usage:
+//
+//	// Create service launcher
+//	launcher := service.NewLauncher()
+//	launcher.SetLogger(log.Default())
+//
+//	// Add services
+//	launcher.AddService(httpServer)
+//	launcher.AddService(grpcServer)
+//	launcher.AddService(healthService)
+//
+//	// Add initializers
+//	launcher.AddInitializer(dbInitializer)
+//	launcher.AddInitializer(cacheInitializer)
+//
+//	// Run all services
+//	if err := launcher.Run(ctx); err != nil {
+//	    log.Fatal("Service launcher failed", log.Field{Key: "error", Value: err})
+//	}
 package service
 
 import (

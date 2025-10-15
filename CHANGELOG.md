@@ -7,21 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Comprehensive structured logging with zap integration
-- Health check endpoints (`/healthz`, `/livez`, `/readyz`) for Kubernetes compatibility
-- Prometheus metrics exposition with custom collectors
-- HTTP and gRPC server implementations with graceful shutdown
-- Database integration with TiDB/MySQL support via GORM
-- Configuration management with environment variable support
-- Service lifecycle management with initializers and launchers
-- Context-aware logging with request ID tracking
-- Colorful console logging for development environments
+- New feature descriptions
+- API endpoint additions
 
 ### Changed
-- Refactored configuration validation into smaller, focused functions
-- Improved error handling throughout the codebase
-- Enhanced test coverage to 90%+ for core modules
-- Updated linting configuration to use modern linters
+- Modified functionality descriptions
+- Updated dependencies
+
+### Fixed
+- Bug fix descriptions
+- Security patches
+
+### Removed
+- Deprecated feature removals
+
+## [0.0.2] - 2025-01-27
+
+### Added
+- Comprehensive package-level documentation for all modules
+- Enhanced pkg.go.dev compatibility with proper Go documentation standards
+- Detailed API documentation with examples and usage patterns
+- Improved package descriptions for monitoring, service, and server modules
+
+### Changed
+- Updated package documentation to follow Go documentation conventions
+- Enhanced README.md with v0.0.2 version badge
+- Improved code comments for better pkg.go.dev integration
+
+### Documentation
+- Added detailed package-level comments for monitoring package
+- Enhanced service package documentation with lifecycle management details
+- Improved server package documentation with HTTP/gRPC server examples
+- Added comprehensive usage examples for all major components
 
 ### Fixed
 - Fixed missing package declarations in multiple files
@@ -40,12 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized struct field alignment for better memory usage
 - Improved concurrent access patterns in service management
 - Enhanced database connection pooling configuration
-
-### Documentation
-- Added comprehensive English comments throughout the codebase
-- Created detailed API documentation for all public interfaces
-- Updated README with modern GitHub standards
-- Added usage examples and best practices
 
 ## [0.0.1] - 2025-10-14
 

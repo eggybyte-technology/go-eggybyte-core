@@ -1,6 +1,28 @@
-// Package monitoring provides health check and metrics exposition for EggyByte services.
-// It includes Kubernetes-compatible health check endpoints and Prometheus metrics
-// exposition with support for custom health checkers and metrics collectors.
+// Package monitoring provides health check and metrics exposition services for EggyByte services.
+// It includes Kubernetes-compatible health check endpoints, Prometheus metrics collection,
+// and unified observability infrastructure for microservice monitoring.
+//
+// The monitoring package is designed to run alongside business services on separate ports
+// to provide security isolation and dedicated monitoring endpoints.
+//
+// Key Features:
+//   - Kubernetes-compatible health check endpoints (/healthz, /livez, /readyz)
+//   - Prometheus metrics exposition (/metrics)
+//   - Custom health checker registration
+//   - Graceful shutdown and lifecycle management
+//
+// Example Usage:
+//
+//	// Create health check service
+//	healthService := monitoring.NewHealthService(8081)
+//	healthService.AddChecker(&MyCustomChecker{})
+//
+//	// Create metrics service
+//	metricsService := monitoring.NewMetricsService(9091)
+//
+//	// Register with service launcher
+//	launcher.AddService(healthService)
+//	launcher.AddService(metricsService)
 package monitoring
 
 import (

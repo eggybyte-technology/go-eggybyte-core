@@ -4,7 +4,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.25.1+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v0.0.1-blue.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/releases/tag/v0.0.1)
+[![Version](https://img.shields.io/badge/Version-v0.0.2-blue.svg)](https://github.com/eggybyte-technology/go-eggybyte-core/releases/tag/v0.0.2)
 [![Go Reference](https://pkg.go.dev/badge/github.com/eggybyte-technology/go-eggybyte-core.svg)](https://pkg.go.dev/github.com/eggybyte-technology/go-eggybyte-core)
 [![Test Coverage](https://img.shields.io/badge/Coverage-90%2B%25-green.svg)](coverage.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/eggybyte-technology/go-eggybyte-core)](https://goreportcard.com/report/github.com/eggybyte-technology/go-eggybyte-core)
@@ -583,7 +583,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## 📞 Support
 
-- 📧 Email: [support@eggybyte.com](mailto:support@eggybyte.com)
+- 📧 Email: [support@eggybyte.com](mailto:affair@eggybyte.com)
 - 💬 Discord: [Join our community](https://discord.gg/eggybyte)
 - 📖 Documentation: [docs.eggybyte.com](https://docs.eggybyte.com)
 - 🐛 Issues: [GitHub Issues](https://github.com/eggybyte-technology/go-eggybyte-core/issues)

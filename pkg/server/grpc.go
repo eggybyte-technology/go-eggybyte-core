@@ -1,4 +1,31 @@
 // Package server provides HTTP and gRPC server implementations for EggyByte services.
+// It includes business server implementations with handler registration,
+// lifecycle management, and graceful shutdown capabilities.
+//
+// The server package provides ready-to-use HTTP and gRPC servers that integrate
+// seamlessly with the EggyByte Core bootstrap system. These servers are designed
+// to run alongside infrastructure services (health checks, metrics) on separate ports.
+//
+// Key Features:
+//   - HTTP server with configurable timeouts and middleware support
+//   - gRPC server with reflection and interceptor support
+//   - Graceful shutdown with configurable timeouts
+//   - Structured logging integration
+//   - Service interface compliance for lifecycle management
+//
+// Example Usage:
+//
+//	// Create HTTP server
+//	httpServer := server.NewHTTPServer(":8080")
+//	httpServer.HandleFunc("/api/v1/users", userHandler)
+//
+//	// Create gRPC server
+//	grpcServer := server.NewGRPCServer(":9090")
+//	grpcServer.EnableReflection()
+//	pb.RegisterUserServiceServer(grpcServer.GetServer(), userService)
+//
+//	// Register with bootstrap
+//	core.Bootstrap(cfg, httpServer, grpcServer)
 package server
 
 import (
